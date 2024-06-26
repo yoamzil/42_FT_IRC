@@ -46,11 +46,13 @@ Server::Server(int port, const std::string& password) : port(port), password(pas
         exit(1);
     }
     setNonBlocking(serverSocket);
+
+    pollfd serverPollFd = {serverSocket, POLLIN, 0};
+    clientSockets.push_back(serverPollFd);
 }
 
 void    Server::handleClient(int clientSocket)
 {
-    std::cout << "Handling client" << std::endl;
     char    buffer[512];
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
@@ -65,7 +67,7 @@ void    Server::handleClient(int clientSocket)
     }
     buffer[bytesRead] = '\0';
     std::cout << "Received: " << buffer << std::endl;
-    send(clientSocket, buffer, bytesRead, 0);
+    // send(clientSocket, buffer, bytesRead, 0);
 }
 
 void    Server::acceptClient()
@@ -83,7 +85,9 @@ void    Server::acceptClient()
         return ;
     }
     setNonBlocking(clientSocket);
-    clientSockets.push_back(clientSocket);
+    pollfd clientPollFd = {clientSocket, POLLIN, 0};
+    clientSockets.push_back(clientPollFd);
+    clients[clientSocket] = "";
     std::cout << "New client connected" << clientSocket << std::endl;
 }
 
@@ -92,10 +96,26 @@ void    Server::start()
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
     while (true)
     {
-        acceptClient();
+        int pollCount = poll(clientSockets.data(), clientSockets.size(), -1);
+        if (pollCount < 0)
+        {
+            std::cerr << "Poll failed." << std::endl;
+            close(serverSocket);
+            exit(1);
+        }
         for (size_t i = 0; i < clientSockets.size(); i++)
         {
-            handleClient(clientSockets[i]);
+            if (clientSockets[i].revents & POLLIN)
+            {
+                if (clientSockets[i].fd == serverSocket)
+                {
+                    acceptClient();
+                }
+                else
+                {
+                    handleClient(clientSockets[i].fd);
+                }
+            }
         }
     }
 }
@@ -103,6 +123,14 @@ void    Server::start()
 void    Server::removeClient(int clientSocket)
 {
     close(clientSocket);
-    clientSockets.erase(std::remove(clientSockets.begin(), clientSockets.end(), clientSocket), clientSockets.end());
+    clients.erase(clientSocket);
+    for (size_t i = 0; i < clientSockets.size(); i++)
+    {
+        if (clientSockets[i].fd == clientSocket)
+        {
+            clientSockets.erase(clientSockets.begin() + i);
+            break ;
+        }
+    }
     std::cout << "Client disconnected" << clientSocket << std::endl;
 }

@@ -8,15 +8,18 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
+#include <map>
 
 class Server
 {
     private:
-        int                 port;
-        std::string         password;
+        int                         port;
+        std::string                 password;
 
-        int                 serverSocket;
-        std::vector<int>    clientSockets;
+        int                         serverSocket;
+        std::vector<pollfd>         clientSockets;
+        std::map<int, std::string>  clients;
 
         void        handleClient(int clientSocket);
         void        acceptClient();
