@@ -88,7 +88,7 @@ void    Server::acceptClient()
     pollfd clientPollFd = {clientSocket, POLLIN, 0};
     clientSockets.push_back(clientPollFd);
     clients[clientSocket] = "";
-    std::cout << "New client connected" << clientSocket << std::endl;
+    std::cout << "New client connected " << clientSocket << std::endl;
 }
 
 void    Server::start()
@@ -132,5 +132,5 @@ void    Server::removeClient(int clientSocket)
             break ;
         }
     }
-    std::cout << "Client disconnected" << clientSocket << std::endl;
+    std::cout << "Client disconnected " << clientSocket << std::endl;
 }
