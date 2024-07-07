@@ -53,107 +53,47 @@ Server::Server(int port, const std::string& password) : port(port), password(pas
     pollfd serverPollFd = {serverSocket, POLLIN, 0};
     clientSockets.push_back(serverPollFd);
 }
-
-std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
-    std::vector<std::string> result;
-    size_t start = 0;
-    size_t end = str.find(delimiter);
-
-    while (end != std::string::npos) {
-        result.push_back(str.substr(start, end - start));
-        start = end + delimiter.length(); // Move past the delimiter
-        end = str.find(delimiter, start);
-    }
-
-    // Add the last part
-    result.push_back(str.substr(start));
-
-    return result;
+void Server::joinChannel(int clientSocket, const std::string& channel) {
+    channels[channel].push_back(clientSocket);
+    send(clientSocket, ("Joined channel " + channel).c_str(), ("Joined channel " + channel).length(), 0);
+	std::cout << "ana : " << channel << std::endl;
 }
 
-
-
-std::vector<std::string> splitString1(const std::string& str) {
-    std::istringstream iss(str);
-    std::vector<std::string> result;
-    std::string word;
-
-    while (iss >> word) {
-        result.push_back(word);
-    }
-    return result;
+void Server::leaveChannel(int clientSocket, const std::string& channel) {
+    std::vector<int>& clientsInChannel = channels[channel];
+    clientsInChannel.erase(std::remove(clientsInChannel.begin(), clientsInChannel.end(), clientSocket), clientsInChannel.end());
+    send(clientSocket, ("Left channel " + channel).c_str(), ("Left channel " + channel).length(), 0);
 }
 
+void Server::broadcastMessage(const std::string& channel, const std::string& message) {
+    std::vector<int>::iterator it;
+    for (it = channels[channel].begin(); it != channels[channel].end(); ++it) {
+        send(*it, message.c_str(), message.length(), 0);
+    }
+}
 
-void Server::handleMessage(__unused int clientSocket, const std::string& message)
-{
-	// std::string input = "this\r\nis::a::test\r\nstring";
-	std::vector<std::string> input;
-	if (client.find(clientSocket) != client.end()) {
-        Client* clientObj = client[clientSocket];
-        // Use clientObj to interact with the client
-		if (message.find("\r\n"))
-		{
-			std::string delimiter = "\r\n";
-			input = splitString(message, delimiter);
-			for (size_t i = 0; i < input.size() - 1; ++i) {
-				std::vector<std::string> words = splitString1(input[i]);
-				if (words[0] == "PASS")
-				{
-					if (words[1] == password)
-					{
-						status += 1;
-						std::cout << status << "password is correct" << std::endl;
-					}
-					else if (words[1] != password)
-					{
-						std::cout << status << "password  incorrect" << std::endl;
-					}
-				}
-				else if (words[0] == "NICK" && status >= 1)
-				{
-					status += 1;
-					std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << std::endl;
-				}
-				else if (words[0] == "USER" && status >= 1)
-				{
-					status += 1;
-					std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << std::endl;
-				}
-			}
-		}
-		std::vector<std::string> words = splitString1(message);
-		// std::cout << "aarab : " << message << std::endl;
-		if (words[0] == "PASS")
-		{
-			if (words[1] == password)
-			{
-				clientObj->setCorrectPass();
-				// client.setPassword(password);
-				std::cout << clientObj->correctpass() << "password is correct" << std::endl;
-			}
-			else if (words[1] != password)
-			{
-				std::cout << clientObj->correctpass() << "password  incorrect" << std::endl;
-			}
-		}
-		else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
-		{
-			clientObj->setNikename(words[1]);
-			std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-		}
-		else if (words[0] == "USER" && clientObj->correctpass() == 1 && words[1] != "\0")
-		{
-			clientObj->setUsername(words[1]);
-			std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
-		}
+void Server::handleMessage(int clientSocket, const std::string& message) {
+    if (message == "/quit") {
+        removeClient(clientSocket);
+    } else if (message.find("/invite ") == 0) {
+        std::string channel = message.substr(6);
+        joinChannel(clientSocket, channel);
+    } else if (message.find("/kick ") == 0) {
+        std::string channel = message.substr(7);
+        leaveChannel(clientSocket, channel);
+    } else if (message.find("/msg ") == 0) {
+        size_t pos = message.find(' ', 5);
+        std::string channel = message.substr(5, pos - 5);
+        std::string msg = message.substr(pos + 1);
+        broadcastMessage(channel, nicknames[clientSocket] + ": " + msg);
+    } else {
+        send(clientSocket, "command : ", strlen("command : "), 0);
     }
 }
 
 void    Server::handleClient(int clientSocket)
 {
     char    buffer[512];
-	
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
     if (bytesRead <= 0)
@@ -166,9 +106,8 @@ void    Server::handleClient(int clientSocket)
         return ;
     }
     buffer[bytesRead] = '\0';
-    // std::cout << "Received: " << buffer << std::endl;
 	handleMessage(clientSocket, buffer);
-
+    std::cout << "Received: " << buffer;
     // send(clientSocket, buffer, bytesRead, 0);
 }
 
@@ -186,22 +125,19 @@ void    Server::acceptClient()
         }
         return ;
     }
-	status = 0;
-	setNonBlocking(clientSocket);
-	pollfd clientPollFd = {clientSocket, POLLIN, 0};
-	clientSockets.push_back(clientPollFd);
-	clients[clientSocket] = "";
-	Client* newClient = new Client();
-    newClient->setFd(clientSocket);
-    client[clientSocket] = newClient;
+    setNonBlocking(clientSocket);
+    pollfd clientPollFd = {clientSocket, POLLIN, 0};
+    clientSockets.push_back(clientPollFd);
+    clients[clientSocket] = "";
+	
+    std::cout << "New client connected " << clientSocket << std::endl;
+	send(clientSocket, "Enter your nickname: ", strlen("Enter your nickname: "), 0);
 
-	std::cout << "New client connected " << clientSocket << std::endl;
 }
 
 void    Server::start()
 {
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
-	// Client client;
     while (true)
     {
         int pollCount = poll(clientSockets.data(), clientSockets.size(), -1);
