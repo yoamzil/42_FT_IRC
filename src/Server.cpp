@@ -84,71 +84,116 @@ std::vector<std::string> splitString1(const std::string& str) {
     return result;
 }
 
+void	Server::authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words)
+{
+	if (words[0] == "PASS")
+	{
+		if (words[1] == password)
+		{
+			clientObj->setCorrectPass();
+			// client.setPassword(password);
+			std::cout << clientSocket << " : password is correct" << std::endl;
+		}
+		else if (words[1] != password)
+		{
+			std::cout << clientSocket << " : password  incorrect" << std::endl;
+		}
+	}
+	else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
+	{
+		clientObj->setNikename(words[1]);
+		std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
+	}
+	else if (words[0] == "USER" && clientObj->correctpass() == 1 && words[1] != "\0")
+	{
+		clientObj->setUsername(words[1]);
+		std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
+	}
+	else if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0")
+	{
+		clientObj->setFd(clientSocket);
+		clientObj->setAuthentication();
+		// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
+	}
+}
+
+void Server::sendMessage(int clientSocket, const std::string& message) {
+    send(clientSocket, message.c_str(), message.size(), 0);
+}
+
+
+void Server::broadcastMessage(const std::string& channelName, const std::string& message) {
+    std::map<std::string, Channel>::iterator it = channels.find(channelName);
+    if (it != channels.end()) {
+        Channel& channel = it->second;
+        std::map<int, Client*> channelClients = channel.getClients();
+
+        for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
+            Client* client = clientIt->second;
+            sendMessage(client->getFd(), message);
+            // Logic to send message to client
+        }
+    }
+}
+
+
+
+
+void Server::joinChannel(__unused int clientSocket, __unused std::string& channelName) {
+    if (client.find(clientSocket) != client.end()) {
+        Client* clientObj = client[clientSocket];
+
+        // Check if the channel exists, if not, create it
+        if (channels.find(channelName) == channels.end()) {
+            channels[channelName] = Channel(channelName);
+        }
+
+        // Add the client to the channel
+        channels[channelName].addClient(clientObj);
+		clientObj->setChannelName(channelName);
+		// std::cout << "user : " << clientObj->getUsername() << " creat a channel = " << channelName << std::endl;
+    }
+}
+
+
+
 
 void Server::handleMessage(__unused int clientSocket, const std::string& message)
 {
 	// std::string input = "this\r\nis::a::test\r\nstring";
+	Client* clientObj;
+
+
 	std::vector<std::string> input;
 	if (client.find(clientSocket) != client.end()) {
-        Client* clientObj = client[clientSocket];
+        clientObj = client[clientSocket];
         // Use clientObj to interact with the client
+    }
 		if (message.find("\r\n"))
 		{
 			std::string delimiter = "\r\n";
 			input = splitString(message, delimiter);
 			for (size_t i = 0; i < input.size() - 1; ++i) {
 				std::vector<std::string> words = splitString1(input[i]);
-				if (words[0] == "PASS")
-				{
-					if (words[1] == password)
-					{
-						clientObj->setCorrectPass();
-						// client.setPassword(password);
-						std::cout << clientObj->correctpass() << "password is correct" << std::endl;
-					}
-					else if (words[1] != password)
-					{
-						std::cout << clientObj->correctpass() << "password  incorrect" << std::endl;
-					}
-				}
-				else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
-				{
-					clientObj->setNikename(words[1]);
-					std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-				}
-				else if (words[0] == "USER" && clientObj->correctpass() == 1 && words[1] != "\0")
-				{
-					clientObj->setUsername(words[1]);
-					std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
-				}
+				authentication(clientObj, clientSocket, words);
 			}
 		}
 		std::vector<std::string> words = splitString1(message);
-		// std::cout << "aarab : " << message << std::endl;
-		if (words[0] == "PASS")
+		authentication(clientObj, clientSocket, words);
+		if (clientObj->getAuthentication() == 1)
 		{
-			if (words[1] == password)
+			// Channel* channelObj;
+			if (words[0] == "/join" && words[1] != "\0")
 			{
-				clientObj->setCorrectPass();
-				// client.setPassword(password);
-				std::cout << clientObj->correctpass() << "password is correct" << std::endl;
+				joinChannel(clientSocket, words[1]);
 			}
-			else if (words[1] != password)
+			else if(words[0] != "/join")
 			{
-				std::cout << clientObj->correctpass() << "password  incorrect" << std::endl;
+				// Replace clientObj->getChannelName() with the appropriate function call
+				broadcastMessage(clientObj->getChannelName(), message);
 			}
+			
 		}
-		else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
-		{
-			clientObj->setNikename(words[1]);
-			std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-		}
-		else if (words[0] == "USER" && clientObj->correctpass() == 1 && words[1] != "\0")
-		{
-			clientObj->setUsername(words[1]);
-			std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
-		}
-    }
 }
 
 void    Server::handleClient(int clientSocket)
@@ -169,6 +214,7 @@ void    Server::handleClient(int clientSocket)
     buffer[bytesRead] = '\0';
     // std::cout << "Received: " << buffer << std::endl;
 	handleMessage(clientSocket, buffer);
+	// Message(clientSocket, buffer);
 
     // send(clientSocket, buffer, bytesRead, 0);
 }
@@ -191,10 +237,11 @@ void    Server::acceptClient()
 	setNonBlocking(clientSocket);
 	pollfd clientPollFd = {clientSocket, POLLIN, 0};
 	clientSockets.push_back(clientPollFd);
-	clients[clientSocket] = "";
+	// clients[clientSocket] = "";
 	Client* newClient = new Client();
     newClient->setFd(clientSocket);
     client[clientSocket] = newClient;
+	// Channel* newChannel = new Channel();
 
 	std::cout << "New client connected " << clientSocket << std::endl;
 }
@@ -243,3 +290,4 @@ void    Server::removeClient(int clientSocket)
     }
     std::cout << "Client disconnected " << clientSocket << std::endl;
 }
+

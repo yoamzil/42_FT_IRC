@@ -2,20 +2,27 @@
 #define CLIENT_HPP
 
 #include "../include/Server.hpp"
+#include "../include/Channel.hpp"
 
-// class Server;
+class Server;
+class Channel;
 
 class Client
 {
-    private:
+    public:
 		int			_fd;
+		bool		_authentication;
 		std::string username;
 		std::string nickname;
 		std::string pass;
+		std::string _channelName;
 		bool		correctPassword;
 
     public:
 		Client();
+		// Client(Client const &src);
+		// Client & operator=(Client const &src);
+
 		void setUsername(std::string userName);
 		void setNikename(std::string nikeName);
 		std::string getUsername();
@@ -26,6 +33,10 @@ class Client
 		int 	getFd();
 		void	setCorrectPass();
 		bool 	correctpass();
+		bool 	getAuthentication();
+		void	setAuthentication();
+		std::string getChannelName() const;
+		void setChannelName(const std::string& channelName);
 		~Client();
 		void start();
 };
