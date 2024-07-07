@@ -102,23 +102,24 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 				{
 					if (words[1] == password)
 					{
-						status += 1;
-						std::cout << status << "password is correct" << std::endl;
+						clientObj->setCorrectPass();
+						// client.setPassword(password);
+						std::cout << clientObj->correctpass() << "password is correct" << std::endl;
 					}
 					else if (words[1] != password)
 					{
-						std::cout << status << "password  incorrect" << std::endl;
+						std::cout << clientObj->correctpass() << "password  incorrect" << std::endl;
 					}
 				}
-				else if (words[0] == "NICK" && status >= 1)
+				else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
 				{
-					status += 1;
-					std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << std::endl;
+					clientObj->setNikename(words[1]);
+					std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
 				}
-				else if (words[0] == "USER" && status >= 1)
+				else if (words[0] == "USER" && clientObj->correctpass() == 1 && words[1] != "\0")
 				{
-					status += 1;
-					std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << std::endl;
+					clientObj->setUsername(words[1]);
+					std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
 				}
 			}
 		}
