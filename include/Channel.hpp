@@ -24,7 +24,7 @@ class Channel
 		// void removeClient(int clientFd);
 		// Client* getClient(int clientFd);
 		std::map<int, Client*> getClients();
-		std::string getName() ;
+		std::string getName();
 		~Channel();
 
 };
