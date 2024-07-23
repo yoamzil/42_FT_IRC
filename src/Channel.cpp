@@ -1,4 +1,6 @@
 #include "../include/Channel.hpp"
+#include <iostream>
+#include <ostream>
 
 Channel::Channel(std::string& name) : name(name) {}
 
@@ -8,7 +10,8 @@ void Channel::addClient(Client* client) {
 
 Channel::~Channel()
 {
-
+    // std::cout << "hello" << std::endl;
+    std::cout << "hello" << std::endl;
 }
 
 Channel::Channel()

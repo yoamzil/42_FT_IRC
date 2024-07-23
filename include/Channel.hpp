@@ -37,7 +37,6 @@ class Channel
 		std::map<int, Client*> getInviteList();
 		void addToInviteList();
 		~Channel();
-		vo
 };
 		// Channel & operator=(Channel const &src);
 		// Channel(Channel const &src);
