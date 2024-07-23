@@ -9,7 +9,7 @@ void Commands::kick(int isAdmin, int toKick, Channel* channel) {
 }
 
 void Commands::invite(int isAdmin, int newMember, Channel* channel) {
-    
+    channel.
 }
 
 void Commands::topic(int isAdmin, std::string newTopic, Channel* channel) {
