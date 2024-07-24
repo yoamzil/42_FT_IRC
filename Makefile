@@ -4,9 +4,12 @@ NAME		=	ircserv
 SRCS		=	src/main.cpp \
 				src/Server.cpp \
 				src/Client.cpp \
+				src/Channel.cpp \
 
 HFS			=	include/Server.hpp \
-				include/Client.hpp
+				include/Client.hpp \
+				include/Channel.hpp \
+				
 
 OBJS		=	$(SRCS:.cpp=.o)
 
