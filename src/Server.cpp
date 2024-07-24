@@ -111,6 +111,8 @@ void	Server::authentication(Client* clientObj, __unused int clientSocket, std::v
 	}
 	else if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0")
 	{
+		// std::string message = "001 " + clientObj->getNickname() + " :Welcome to the Network\r\n";
+		// sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
 		clientObj->setFd(clientSocket);
 		clientObj->setAuthentication();
 		// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
@@ -123,6 +125,8 @@ void Server::broadcastMessage(const std::string& channelName, const std::string&
     if (it != channels.end()) {
         Channel& channel = it->second;
         std::map<int, Client*> channelClients = channel.getClients();
+		// std::string message1 = "353 " + client[clientSocket]->getNickname() + " = " + channelName + " :" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost\r\n";
+		// std::string message2 = "366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 
 		std::string  msg = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "localhost " + message + "\r\n";
         for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
@@ -130,6 +134,8 @@ void Server::broadcastMessage(const std::string& channelName, const std::string&
 			// message = " :haarab!~hamza@197.230.24.20 PRIVMSG #hh :;jg"
 			if (client->getFd() != clientSocket)
             	sendMessage(client->getFd(), msg);
+            	// sendMessage(client->getFd(), message1);
+            	// sendMessage(client->getFd(), message2);
             // Logic to send message to client
         }
     }
@@ -146,7 +152,11 @@ void Server::sendMessage(int clientSocket, const std::string& message) {
 void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
 	// std::cout << "youtube" << std::endl;
 	// std::string message = ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname\r\n";
-	std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "localhost JOIN " + channelName + " * :realname\r\n";
+	std::string message = ":" + client[clientSocket]->getNickname() + "!~" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+	// 353 haara = #ui :@haara!~hamza@197.230.24.
+	std::string message1 = ": 353 " + client[clientSocket]->getNickname() + " = " + channelName + " :@" + client[clientSocket]->getNickname() + "!~" + client[clientSocket]->getUsername() + "@localhost\r\n";
+	std::string message2 = ": 366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+	
 	
 	// sendMessage(clientSocket, ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname");
     if (client.find(clientSocket) != client.end()) {
@@ -161,6 +171,8 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
         channels[channelName].addClient(clientObj);
 		clientObj->setChannelName(channelName);
 		send(clientSocket, message.c_str(), message.size(), 0);
+		send(clientSocket, message1.c_str(), message1.size(), 0);
+		send(clientSocket, message2.c_str(), message2.size(), 0);
 
 		// std::cout << "user : " << clientObj->getUsername() << " creat a channel = " << channelName << std::endl;
     }
