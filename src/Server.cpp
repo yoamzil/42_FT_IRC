@@ -1,4 +1,7 @@
 #include "../include/Server.hpp"
+#include "../include/Client.hpp"
+#include "../include/Channel.hpp"
+#include "../include/Commands.hpp"
 
 void    Server::setNonBlocking(int socket)
 {
@@ -183,17 +186,37 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 		if (clientObj->getAuthentication() == 1)
 		{
 			// Channel* channelObj;
-			if (words[0] == "/join" && words[1] != "\0")
+			if (words[0] == "JOIN" && words[1] != "\0")
 			{
 				joinChannel(clientSocket, words[1]);
 			}
-			else if(words[0] != "/join")
+			else if (words[0] == "KICK")
+			{
+    			std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
+                if (channelIt != channels.end()) {
+                    Channel* channelPtr = &(channelIt->second);
+                bool found = false;
+			    std::map<int, Client*>::iterator it;
+			    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); ++it)
+				{
+				    if (it->second->nickname == words[2])
+					{
+						found = true;
+						break;
+					}
+				}
+				if (found)
+			        kick(clientSocket, it->first, channelPtr);
+				else
+				    std::cout << "No user found" << std::endl;
+			}
+			else if (words[0] != "JOIN")
 			{
 				// Replace clientObj->getChannelName() with the appropriate function call
 				broadcastMessage(clientObj->getChannelName(), message);
 			}
-			
 		}
+	}
 }
 
 void    Server::handleClient(int clientSocket)

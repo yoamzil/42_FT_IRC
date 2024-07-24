@@ -38,11 +38,6 @@ class Channel
 		void addToInviteList();
 		~Channel();
 };
-		// Channel & operator=(Channel const &src);
-		// Channel(Channel const &src);
-		// std::string getChannelName();
-		// void removeClient(int clientFd);
-		// Client* getClient(int clientFd);
 
 
 #endif

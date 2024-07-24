@@ -2,7 +2,7 @@
 #define CLIENT_HPP
 
 #include "../include/Server.hpp"
-#include "../include/Channel.hpp"
+// #include "../include/Channel.hpp"
 
 class Server;
 class Channel;

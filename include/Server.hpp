@@ -12,14 +12,12 @@
 #include <poll.h>
 #include <map>
 
-#include "../include/Client.hpp"
+// #include "../include/Client.hpp"
+#include "../include/Commands.hpp"
 #include "../include/Channel.hpp"
+#include "../include/Client.hpp"
 
-class Client;
-
-class Channel;
-
-class Server
+class Server : public Commands
 {
     public:
         int                         port;
@@ -32,7 +30,7 @@ class Server
 		int status;
 		std::map <int, Client *> client;
 		// std::map <int, Channel *> channel;
-		 std::map<std::string, Channel> channels;
+		std::map<std::string, Channel> channels;
 
         // std::map<int, std::string>  nicknames;
         // std::map<std::string, std::vector<int> > channels;

@@ -1,6 +1,6 @@
+#include "../include/Server.hpp"
+#include "../include/Client.hpp"
 #include "../include/Channel.hpp"
-#include <iostream>
-#include <ostream>
 
 Channel::Channel(std::string& name) : name(name) {}
 
