@@ -20,23 +20,14 @@
 class Server : public Commands
 {
     public:
-        int                         port;
-        std::string                 password;
-
-
-        int                         serverSocket;
-        std::vector<pollfd>         clientSockets;
-        std::map<int, std::string>  clients;
-		int status;
-		std::map <int, Client *> client;
-		// std::map <int, Channel *> channel;
+        int                            port;
+        std::string                    password;
+        int                            serverSocket;
+        std::vector<pollfd>            clientSockets;
+        std::map<int, std::string>     clients;
+		std::map<int, Client *>        client;
 		std::map<std::string, Channel> channels;
-
-        // std::map<int, std::string>  nicknames;
-        // std::map<std::string, std::vector<int> > channels;
-
-		// Server(Server const &src);
-		// Server & operator=(Server const &src);
+		int status;
 
         void        handleClient(int clientSocket);
         void        acceptClient();
@@ -47,7 +38,7 @@ class Server : public Commands
 		void 		handleMessage(int clientSocket, const std::string& message);
 		void		joinChannel(int clientSocket, std::string& channel);
 		void		leaveChannel(int clientSocket, const std::string& channel);
-		void		broadcastMessage(const std::string& channelName, const std::string& message);
+		void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
 		void		authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words);
 		// void		Message(int clientSocket, const std::string& message);
         void start();

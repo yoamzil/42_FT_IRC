@@ -120,29 +120,41 @@ void	Server::authentication(Client* clientObj, __unused int clientSocket, std::v
 	}
 }
 
-void Server::sendMessage(int clientSocket, const std::string& message) {
-    send(clientSocket, message.c_str(), message.size(), 0);
-}
-
-
-void Server::broadcastMessage(const std::string& channelName, const std::string& message) {
+void Server::broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket) {
     std::map<std::string, Channel>::iterator it = channels.find(channelName);
     if (it != channels.end()) {
         Channel& channel = it->second;
         std::map<int, Client*> channelClients = channel.getClients();
+		// std::string message1 = "353 " + client[clientSocket]->getNickname() + " = " + channelName + " :" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost\r\n";
+		// std::string message2 = "366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 
+		std::string  msg = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "localhost " + message + "\r\n";
         for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
             Client* client = clientIt->second;
-            sendMessage(client->getFd(), message);
+			// message = " :haarab!~hamza@197.230.24.20 PRIVMSG #hh :;jg"
+			if (client->getFd() != clientSocket)
+            	sendMessage(client->getFd(), msg);
+            	// sendMessage(client->getFd(), message1);
+            	// sendMessage(client->getFd(), message2);
             // Logic to send message to client
         }
     }
 }
 
+void Server::sendMessage(int clientSocket, const std::string& message) {
+    send(clientSocket, message.c_str(), message.size(), 0);
+}
 
-
-
-void Server::joinChannel(__unused int clientSocket, __unused std::string& channelName) {
+void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
+	// std::cout << "youtube" << std::endl;
+	// std::string message = ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname\r\n";
+	std::string message = ":" + client[clientSocket]->getNickname() + "!~" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+	// 353 haara = #ui :@haara!~hamza@197.230.24.
+	std::string message1 = ": 353 " + client[clientSocket]->getNickname() + " = " + channelName + " :@" + client[clientSocket]->getNickname() + "!~" + client[clientSocket]->getUsername() + "@localhost\r\n";
+	std::string message2 = ": 366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+	
+	
+	// sendMessage(clientSocket, ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname");
     if (client.find(clientSocket) != client.end()) {
         Client* clientObj = client[clientSocket];
 
@@ -154,18 +166,18 @@ void Server::joinChannel(__unused int clientSocket, __unused std::string& channe
         // Add the client to the channel
         channels[channelName].addClient(clientObj);
 		clientObj->setChannelName(channelName);
+		send(clientSocket, message.c_str(), message.size(), 0);
+		send(clientSocket, message1.c_str(), message1.size(), 0);
+		send(clientSocket, message2.c_str(), message2.size(), 0);
+
 		// std::cout << "user : " << clientObj->getUsername() << " creat a channel = " << channelName << std::endl;
     }
 }
-
-
-
 
 void Server::handleMessage(__unused int clientSocket, const std::string& message)
 {
 	// std::string input = "this\r\nis::a::test\r\nstring";
 	Client* clientObj;
-
 
 	std::vector<std::string> input;
 	if (client.find(clientSocket) != client.end()) {
@@ -174,46 +186,48 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
     }
 		if (message.find("\r\n"))
 		{
+			std::vector<std::string> words;
 			std::string delimiter = "\r\n";
 			input = splitString(message, delimiter);
-			for (size_t i = 0; i < input.size() - 1; ++i) {
-				std::vector<std::string> words = splitString1(input[i]);
+			for (size_t i = 0; i < input.size() - 1; ++i)
+			{
+				words = splitString1(input[i]);
 				authentication(clientObj, clientSocket, words);
 			}
-		}
-		std::vector<std::string> words = splitString1(message);
-		authentication(clientObj, clientSocket, words);
-		if (clientObj->getAuthentication() == 1)
-		{
-			// Channel* channelObj;
-			if (words[0] == "JOIN" && words[1] != "\0")
+			if (clientObj->getAuthentication() == 1)
 			{
-				joinChannel(clientSocket, words[1]);
-			}
-			else if (words[0] == "KICK")
-			{
-    			std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
-                if (channelIt != channels.end()) {
-                    Channel* channelPtr = &(channelIt->second);
-                bool found = false;
-			    std::map<int, Client*>::iterator it;
-			    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); ++it)
+				// Channel* channelObj;
+				if (words[0] == "JOIN" && words[1] != "\0")
 				{
-				    if (it->second->nickname == words[2])
-					{
-						found = true;
-						break;
-					}
+					// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
+					joinChannel(clientSocket, words[1]);
 				}
-				if (found)
-			        kick(clientSocket, it->first, channelPtr);
-				else
-				    std::cout << "No user found" << std::endl;
-			}
-			else if (words[0] != "JOIN")
-			{
-				// Replace clientObj->getChannelName() with the appropriate function call
-				broadcastMessage(clientObj->getChannelName(), message);
+				else if (words[0] == "KICK")
+				{
+         			std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
+                    if (channelIt != channels.end()) 
+                    {
+                        Channel* channelPtr = &(channelIt->second);
+                        bool found = false;
+    				    std::map<int, Client*>::iterator it;
+    				    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); ++it)
+    					{
+    					    if (it->second->nickname == words[2])
+    						{
+    							found = true;
+    							break;
+    						}
+    					}
+					if (found)
+				        kick(clientSocket, it->first, channelPtr);
+					else
+					    std::cout << "No user found" << std::endl;
+				}
+				else if(words[0] != "JOIN")
+				{
+					// Replace clientObj->getChannelName() with the appropriate function call
+					broadcastMessage(clientObj->getChannelName(), message, clientSocket);
+				}
 			}
 		}
 	}
