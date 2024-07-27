@@ -24,7 +24,6 @@ std::map<int, Client*> Channel::getClients() {
 }
 
 
-
 // Channel::Channel(Channel const &src)
 // {
 // 	std::cout << "Channel : copy constructor called" << std::endl;

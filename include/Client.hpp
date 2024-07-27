@@ -17,6 +17,7 @@ class Client
 		std::string pass;
 		std::string _channelName;
 		bool		correctPassword;
+		bool		status;
 
     public:
 		Client();
@@ -27,6 +28,8 @@ class Client
 		void setNikename(std::string nikeName);
 		std::string getUsername();
 		std::string getNickname();
+		bool		getStatus();
+		void		setStatus(int status);
 		bool 	check_password(std::string str);
 		void	setPassword(std::string Pass);
 		void	setFd(int fd);

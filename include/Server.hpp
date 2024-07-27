@@ -29,7 +29,6 @@ class Server
         int                         serverSocket;
         std::vector<pollfd>         clientSockets;
         std::map<int, std::string>  clients;
-		int status;
 		std::map <int, Client *> client;
 		// std::map <int, Channel *> channel;
 		 std::map<std::string, Channel> channels;
@@ -45,6 +44,7 @@ class Server
         void        removeClient(int clientSocket);
         void        setNonBlocking(int socket);
     public:
+
         Server(int port, const std::string& password);
 		void 		handleMessage(int clientSocket, const std::string& message);
 		void		joinChannel(int clientSocket, std::string& channel);
