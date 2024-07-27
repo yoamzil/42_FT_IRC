@@ -150,15 +150,15 @@ void Server::broadcastMessage(const std::string& channelName, const std::string&
     if (it != channels.end()) {
         Channel& channel = it->second;
         std::map<int, Client*> channelClients = channel.getClients();
-		std::string  msg = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "localhost " + message + "\r\n";
 		// std::string message1 = "353 " + client[clientSocket]->getNickname() + " = " + channelName + " :" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost\r\n";
 		// std::string message2 = "366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-
+		std::cout << "352 " << channelName << std::endl;
+		std::string  msg = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost " + message + "\r\n";
         for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
-            Client* client = clientIt->second;
+            Client* cliente = clientIt->second;
 			// message = " :haarab!~hamza@197.230.24.20 PRIVMSG #hh :;jg"
-			if (client->getFd() != clientSocket)
-            	sendMessage(client->getFd(), msg);
+			if (cliente->getFd() != clientSocket)
+            	sendMessage(cliente->getFd() , msg);
             	// sendMessage(client->getFd(), message1);
             	// sendMessage(client->getFd(), message2);
             // Logic to send message to client
@@ -203,26 +203,26 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
 		// std::cout << "user : " << clientObj->getUsername() << " creat a channel = " << channelName << std::endl;
 		// send(clientSocket, message3.c_str(), message3.size(), 0);
 	}
+		std::map<std::string, Channel>::iterator it = channels.find(channelName);
+		if (it != channels.end()) {
+			Channel& channel = it->second;
+			std::map<int, Client*> channelClients = channel.getClients();
+			for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
+				Client* cliente = clientI->second;
 
-	std::map<std::string, Channel>::iterator it = channels.find(channelName);
-    if (it != channels.end()) {
-        Channel& channel = it->second;
-        std::map<int, Client*> channelClients = channel.getClients();
-		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
-			Client* cliente = clientI->second;
+				std::string msg;
+				for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
+					Client* clien = clientIt->second;
+					if (cliente->getFd() != clien->getFd())
+						msg = msg + " " + clien->getNickname();
 
-			std::string msg;
-			for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
-				Client* clien = clientIt->second;
-				if (cliente->getFd() != clien->getFd())
-					msg = msg + " " + clien->getNickname();
-
+				}
+				std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+				std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+				send(cliente->getFd(), message1.c_str(), message1.size(), 0);
+				send(cliente->getFd(), message2.c_str(), message2.size(), 0);
 			}
-			std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
-			std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
-			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
-		}
+
 		// for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
 		// 		Client* cliente = clientIt->second;
 
@@ -264,7 +264,6 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 				clientObj->setAuthentication();
 				// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
 			}
-			std::cout << clientObj->getAuthentication() << "Welcome to the Network" << clientObj->getStatus() << std::endl;
 			if (clientObj->getAuthentication() == 1)
 			{
 
@@ -275,16 +274,17 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 					std::cout <<  "Welcome " << clientSocket << std::endl;
 					joinChannel(clientSocket, words[1]);
 				}
-				else if(words[0] != "JOIN")
+				else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
 				{
-					
+					std::cout << "hamza wa hamza" << std::endl;
 					// Replace clientObj->getChannelName() with the appropriate function call
-					broadcastMessage(clientObj->getChannelName(), message, clientSocket);
+					broadcastMessage(client[clientSocket]->getChannelName(), message, clientSocket);
 				}
 			}
 			if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
 			{
-				std::string message = "001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
+				// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
+				std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
 				sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
 				clientObj->setStatus(1);
 			}
