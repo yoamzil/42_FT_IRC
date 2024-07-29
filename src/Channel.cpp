@@ -1,5 +1,6 @@
 #include "../include/Server.hpp"
 #include "../include/Client.hpp"
+#include <utility>
 #include "../include/Channel.hpp"
 
 Channel::Channel(std::string& name) : name(name) {}
@@ -22,8 +23,14 @@ std::string Channel::getName(){
     return name;
 }
 
-std::map<int, Client*> Channel::getClients() {
+std::map<int, Client*> Channel::getClients() 
+{
     return clients;
+}
+
+void Channel::setOperator(int clientSocket, Client* newOperator)
+{
+    operators.insert(std::make_pair(clientSocket, newOperator));
 }
 
 

@@ -194,6 +194,7 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
         // Check if the channel exists, if not, create it
         if (channels.find(channelName) == channels.end()) {
             channels[channelName] = Channel(channelName);
+            channels[channelName].setOperator(clientSocket, clientObj);
         }
         channels[channelName].addClient(clientObj);
 		clientObj->setChannelName(channelName);
@@ -282,7 +283,7 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
                         Channel* channelPtr = &(channelIt->second);
                         bool found = false;
     				    std::map<int, Client*>::iterator it;
-    				    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); ++it)
+    				    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); it++)
     					{
     					    if (it->second->nickname == words[2])
     						{

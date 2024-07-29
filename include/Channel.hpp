@@ -31,7 +31,7 @@ class Channel
 		int getLimit();
 		void setLimit(int newLimit);
 		std::map<int, Client*> getOperators();
-		void setOperator(Client* newOperator);
+		void setOperator(int clientSocket, Client* newOperator);
 		std::map<int, Client*> getClients();
 		void addClient(Client* client);
 		std::map<int, Client*> getInviteList();

@@ -9,6 +9,9 @@ void Commands::kick(int isAdmin, int toKick, Channel* channel) {
     std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
     if (it != channel->operators.end())
     {
+        Client *admin = it->second;
+        std::string adminName = admin->nickname;
+        std::cout << "Admin found : " << adminName << std::endl;
         channel->clients.erase(toKick);
         std::cout << "Bug removed succefully" << std::endl;
     }
