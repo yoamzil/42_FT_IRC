@@ -1,11 +1,11 @@
 #include "../include/Client.hpp"
-#include "../include/Server.hpp"
 
 Client::Client()
 {
 	this->_fd = 0;
 	this->correctPassword = 0;
 	this->_authentication = 0;
+	this->status = 0;
 }
 
 void	Client::setPassword(std::string Pass)
@@ -93,4 +93,14 @@ std::string  Client::getChannelName() const
 void Client::setChannelName(const std::string& channelName)
 {
 	this->_channelName = channelName;
+}
+
+bool Client::getStatus()
+{
+	return status;
+}
+
+void Client::setStatus(int status)
+{
+	this->status = status;
 }
