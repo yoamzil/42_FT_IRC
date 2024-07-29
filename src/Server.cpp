@@ -195,41 +195,45 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
         if (channels.find(channelName) == channels.end()) {
             channels[channelName] = Channel(channelName);
             channels[channelName].setOperator(clientSocket, clientObj);
+            channels[channelName].addClient(clientObj);
+            clientObj->setChannelName(channelName);
         }
-        channels[channelName].addClient(clientObj);
-		clientObj->setChannelName(channelName);
-
-        // Add the client to the channel
-
-		// std::cout << "user : " << clientObj->getUsername() << " creat a channel = " << channelName << std::endl;
-		// send(clientSocket, message3.c_str(), message3.size(), 0);
+        else
+        {
+            /*
+                -1- check the channel mode
+                -2- joining will depend on the mode:
+                    -2-1- invite only : check if the user valid in invite list or not
+                    -2-2- key protected : check password if correct or not
+                    -2-3- limited : check if limit reached
+            */
+            // Add the client to the channel
+            channels[channelName].addClient(clientObj);
+    		clientObj->setChannelName(channelName);
+        }
 	}
 		std::map<std::string, Channel>::iterator it = channels.find(channelName);
-		if (it != channels.end()) {
+		if (it != channels.end()) 
+		{
 			Channel& channel = it->second;
 			std::map<int, Client*> channelClients = channel.getClients();
-			for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
+			for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) 
+			{
 				Client* cliente = clientI->second;
 
 				std::string msg;
-				for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
+				for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) 
+				{
 					Client* clien = clientIt->second;
 					if (cliente->getFd() != clien->getFd())
 						msg = msg + " " + clien->getNickname();
-
 				}
 				std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
 				std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 				send(cliente->getFd(), message1.c_str(), message1.size(), 0);
 				send(cliente->getFd(), message2.c_str(), message2.size(), 0);
 			}
-
-		// for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
-		// 		Client* cliente = clientIt->second;
-
-
-		// }
-    }
+        }
 }
 
 

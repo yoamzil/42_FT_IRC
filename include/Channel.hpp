@@ -35,7 +35,7 @@ class Channel
 		std::map<int, Client*> getClients();
 		void addClient(Client* client);
 		std::map<int, Client*> getInviteList();
-		void addToInviteList();
+		void addToInviteList(Client* newMember);
 		~Channel();
 };
 

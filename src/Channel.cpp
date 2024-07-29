@@ -33,6 +33,11 @@ void Channel::setOperator(int clientSocket, Client* newOperator)
     operators.insert(std::make_pair(clientSocket, newOperator));
 }
 
+void Channel::addToInviteList(Client* newMember)
+{
+    inviteList[newMember->getFd()] = newMember;
+}
+
 
 
 // Channel::Channel(Channel const &src)
