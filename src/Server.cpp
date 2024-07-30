@@ -196,7 +196,8 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
             channels[channelName] = Channel(channelName);
             channels[channelName].setOperator(clientSocket, clientObj);
             channels[channelName].addClient(clientObj);
-            clientObj->setChannelName(channelName);
+			channels[channelName].setMode("");
+            // clientObj->setChannelName(channelName);
         }
         else
         {
@@ -207,9 +208,18 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
                     -2-2- key protected : check password if correct or not
                     -2-3- limited : check if limit reached
             */
+		   	if (channels[channelName].getMode() == "invite")
+			{
+            	std::map<int, Client*>::iterator it = channels[channelName].inviteList.find(clientObj);
+				if (it != channels[channelName].inviteList.end())
+					channels[channelName].addClient(clientObj);
+				else
+					std::cout << "You Should be invited to join this channel!" << std::endl;
+			}
+			// else if (channels[channelName].getMode() == "key")
+            // channels[channelName].addClient(clientObj);
             // Add the client to the channel
-            channels[channelName].addClient(clientObj);
-    		clientObj->setChannelName(channelName);
+    		// clientObj->setChannelName(channelName);
         }
 	}
 		std::map<std::string, Channel>::iterator it = channels.find(channelName);

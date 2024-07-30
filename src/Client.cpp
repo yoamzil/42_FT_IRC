@@ -90,10 +90,10 @@ std::string  Client::getChannelName() const
 	return (this->_channelName);
 }
 
-void Client::setChannelName(const std::string& channelName)
-{
-	this->_channelName = channelName;
-}
+// void Client::setChannelName(const std::string& channelName)
+// {
+// 	this->_channelName = channelName;
+// }
 
 bool Client::getStatus()
 {
