@@ -13,7 +13,8 @@ class Channel
 		std::string name;
 		std::string key;
 		std::string topic;
-		std::string mode;//invite-topic-key-operator-limit
+		std::vector<std::string> modes;
+		// std::string mode;//invite-topic-key-operator-limit
 		int limit;//number of members
     	std::map<int, Client*> clients;
 		std::map<int, Client*> operators;
@@ -24,8 +25,8 @@ class Channel
 		std::string getName() ;
 		std::string getTopic();
 		void setTopic(std::string newTopic);
-		std::string getMode();
-		void setMode(std::string newMode);
+		std::vector<std::string> getModes();
+		void setModes(std::string newMode);
 		std::string getKey();
 		void setKey(std::string newPassword);
 		int getLimit();

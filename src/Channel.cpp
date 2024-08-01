@@ -38,14 +38,14 @@ void Channel::addToInviteList(Client* newMember)
     inviteList[newMember->getFd()] = newMember;
 }
 
-void Channel::setMode(std::string newMode)
+void Channel::setModes(std::string newMode)
 {
-    mode = newMode;
+    modes.push_back(newMode);
 }
 
-std::string Channel::getMode()
+std::vector<std::string> Channel::getModes()
 {
-    return (mode);
+    return (modes);
 }
 
 void Channel::setTopic(std::string newTopic)

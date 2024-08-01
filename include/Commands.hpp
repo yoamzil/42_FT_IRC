@@ -8,6 +8,7 @@ class Client;
 
 class Commands
 {
+    
 	public:
 		Commands();
         void kick(int isAdmin, int toKick, Channel* channel);

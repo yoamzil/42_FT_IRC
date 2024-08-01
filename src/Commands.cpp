@@ -75,7 +75,11 @@ void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
 
 void Commands::mode(Channel* channel, std::vector<std::string> words)
 {
-    
+    if (words[2][0] == '+')
+    {
+        
+    }
+    else if (words[2][0] == '-')
 }
 
 Commands::~Commands() {
