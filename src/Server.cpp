@@ -1,4 +1,6 @@
 #include "../include/Server.hpp"
+#include <cerrno> // For errno, EWOULDBLOCK, EAGAIN
+#include <cstdio>
 
 void    Server::setNonBlocking(int socket)
 {
@@ -174,18 +176,8 @@ void Server::sendMessage(int clientSocket, const std::string& message) {
 
 
 
-void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
-	// std::cout << "youtube" << std::endl;
-	// std::string message = ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname\r\n";
-	// std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
-	// 353 haara = #ui :@haara!~hamza@197.230.24.
-	// std::string message1 = ": 353 " + client[clientSocket]->getNickname() + " = " + channelName + " :@" + client[clientSocket]->getNickname() + " " + msg + "\r\n";
-	// std::string message2 = ": 366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-	// std::string message3 = ": 352 " + client[clientSocket]->getNickname() + " " + channelName + " ~" + client[clientSocket]->getUsername() + " localhost "  + client[clientSocket]->getNickname() +  " H@ :0 realname\r\n";
-	//  352 haarabe #hh ~hamza 197.230.24.20 djslocker.scuttled.net haarab H@ :0 realname
-	
-	
-	// sendMessage(clientSocket, ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname");
+void Server::joinChannel(int clientSocket, __unused std::string& channelName, std::vector<std::string> words)
+{
 	std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
 	send(clientSocket, message.c_str(), message.size(), 0);
     if (client.find(clientSocket) != client.end()) {
@@ -197,7 +189,6 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
             channels[channelName].setOperator(clientSocket, clientObj);
             channels[channelName].addClient(clientObj);
 			channels[channelName].setMode("");
-            // clientObj->setChannelName(channelName);
         }
         else
         {
@@ -208,9 +199,16 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
                     -2-2- key protected : check password if correct or not
                     -2-3- limited : check if limit reached
             */
-		   	if (channels[channelName].getMode() == "invite")
+		    if (channels[channelName].getMode() == "key")
 			{
-            	std::map<int, Client*>::iterator it = channels[channelName].inviteList.find(clientObj);
+				if (words[2] == channels[channelName].key)
+					channels[channelName].addClient(clientObj);
+				else
+					std::cout << "Incorrect password" << std::endl;
+			}
+		   	else if (channels[channelName].getMode() == "invite")
+			{
+            	std::map<int, Client*>::iterator it = channels[channelName].inviteList.find(clientSocket);
 				if (it != channels[channelName].inviteList.end())
 					channels[channelName].addClient(clientObj);
 				else
@@ -287,7 +285,7 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 				{
 					// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
 					std::cout <<  "Welcome " << clientSocket << std::endl;
-					joinChannel(clientSocket, words[1]);
+					joinChannel(clientSocket, words[1], words);
 				}
 				else if (words[0] == "KICK")
 				{
@@ -309,6 +307,28 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
                             kick(clientSocket, it->first, channelPtr);
                         else
 					        std::cout << "No user found" << std::endl;
+				    }
+                }
+				else if (words[0] == "MODE")
+				{
+         			std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
+                    if (channelIt != channels.end()) 
+                    {
+                        Channel* channelPtr = &(channelIt->second);
+                        bool found = false;
+    				    std::map<int, Client*>::iterator it;
+    				    for (it = channelPtr->operators.begin(); it != channelPtr->operators.end(); it++)
+    					{
+    					    if (it->second->nickname == words[2])
+    						{
+    							found = true;
+    							break;
+    						}
+    					}
+                        if (found)
+                            mode(channelPtr, words);
+                        else
+					        std::cout << "Permission denied" << std::endl;
 				    }
                 }
 				else if(words[0] != "JOIN" && clientObj->getStatus() == 1)

@@ -38,7 +38,35 @@ void Channel::addToInviteList(Client* newMember)
     inviteList[newMember->getFd()] = newMember;
 }
 
+void Channel::setMode(std::string newMode)
+{
+    mode = newMode;
+}
 
+std::string Channel::getMode()
+{
+    return (mode);
+}
+
+void Channel::setTopic(std::string newTopic)
+{
+    topic = newTopic;
+}
+
+std::string Channel::getTopic()
+{
+    return (topic);
+}
+
+std::string Channel::getKey() 
+{
+    return (key);
+}
+
+void Channel::setKey(std::string newKey)
+{
+    key = newKey;
+}
 
 // Channel::Channel(Channel const &src)
 // {

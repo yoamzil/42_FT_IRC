@@ -73,9 +73,10 @@ void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
     }
 }
 
-// void Commands::mode(int isAdmin, std::string newMode, Channel* channel) {
-
-// }
+void Commands::mode(Channel* channel, std::vector<std::string> words)
+{
+    
+}
 
 Commands::~Commands() {
     std::cout << "Default commands Destructor called";

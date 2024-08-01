@@ -11,6 +11,12 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <map>
+#include <cstdlib>
+#include <cstdio>
+
+#ifndef __unused
+#define __unused
+#endif
 
 // #include "../include/Client.hpp"
 #include "../include/Commands.hpp"
@@ -35,8 +41,8 @@ class Server : public Commands
         void        setNonBlocking(int socket);
     public:
         Server(int port, const std::string& password);
-		void 		handleMessage(int clientSocket, const std::string& message);
-		void		joinChannel(int clientSocket, std::string& channel);
+        void        handleMessage(__unused int clientSocket, const std::string& message);
+		void        joinChannel(int clientSocket, __unused std::string& channelName, std::vector<std::string> words);
 		void		leaveChannel(int clientSocket, const std::string& channel);
 		void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
 		void		authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words);

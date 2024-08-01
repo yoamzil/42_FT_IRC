@@ -11,7 +11,7 @@ class Channel
 {
 	public:
 		std::string name;
-		std::string password;
+		std::string key;
 		std::string topic;
 		std::string mode;//invite-topic-key-operator-limit
 		int limit;//number of members
@@ -26,8 +26,8 @@ class Channel
 		void setTopic(std::string newTopic);
 		std::string getMode();
 		void setMode(std::string newMode);
-		std::string getPassword();
-		void setPassword(std::string newPassword);
+		std::string getKey();
+		void setKey(std::string newPassword);
 		int getLimit();
 		void setLimit(int newLimit);
 		std::map<int, Client*> getOperators();
