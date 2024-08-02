@@ -217,12 +217,14 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
                 }
                 if (channels[channelName].find_mode("l"))
                 {
-                    if (channels[channelName].clients.size() < channels[channelName].getLimit())
+                    int clientsCnt = channels[channelName].clients.size();
+                    if (clientsCnt < channels[channelName].getLimit())
                         modesCount++;
                     else
                         std::cout << "Channel Full" << std::endl;
                 }
-                if (modesCount == channels[channelName].getModes().size())
+                int modes = channels[channelName].getModes().size();
+                if (modesCount == modes)
                 {
                     channels[channelName].addClient(clientObj);
                     // clientObj.setChannelName(channelName);
@@ -325,20 +327,7 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
                     if (channelIt != channels.end()) 
                     {
                         Channel* channelPtr = &(channelIt->second);
-                        bool found = false;
-    				    std::map<int, Client*>::iterator it;
-    				    for (it = channelPtr->operators.begin(); it != channelPtr->operators.end(); it++)
-    					{
-    					    if (it->second->nickname == words[2])
-    						{
-    							found = true;
-    							break;
-    						}
-    					}
-                        if (found)
-                            mode(channelPtr, words);
-                        else
-					        std::cout << "Permission denied" << std::endl;
+                        mode(clientSocket, channelPtr,words);
 				    }
                 }
 				else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
@@ -356,23 +345,6 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 				clientObj->setStatus(1);
 			}
 		}
-		// std::string str = "hamza";
-		// send(clientSocket, str.c_str(), str.size(), 0);
-		// std::vector<std::string> words = splitString1(message);
-		// authentication(clientObj, clientSocket, words);
-		// if (clientObj->getAuthentication() == 1)
-		// {
-		// 	// Channel* channelObj;
-		// 	if (words[0] == "/join" && words[1] != "\0")
-		// 	{
-		// 		joinChannel(clientSocket, words[1]);
-		// 	}
-		// 	else if(words[0] != "/join")
-		// 	{
-		// 		// Replace clientObj->getChannelName() with the appropriate function call
-		// 		broadcastMessage(clientObj->getChannelName(), message);
-		// 	}
-		// }
 }
 
 void    Server::handleClient(int clientSocket)

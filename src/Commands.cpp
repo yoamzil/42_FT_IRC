@@ -73,7 +73,7 @@ void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
     }
 }
 
-void Commands::mode(int isAdmin, int newOperator, Channel* channel, std::vector<std::string> words)
+void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> words)
 {
     std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
     if (it != channel->operators.end())
@@ -102,8 +102,19 @@ void Commands::mode(int isAdmin, int newOperator, Channel* channel, std::vector<
                 else if (modes[i] == 'o')
                 {
                     std::map<int, Client*> clients = channel->getClients();
-                    channel->setOperator(newOperator, clients[newOperator]);
-                    std::cout << "New operator added --> " << clients[newOperator]->nickname << std::endl;
+                    std::string nickName = words[3];
+                    std::map<int, Client*>::const_iterator it;
+                    int clientFd;
+                    for (it = clients.begin(); it != clients.end(); ++it) 
+                    {
+                        if (it->second->username == nickName)
+                        {
+                            clientFd = it->first;
+                            break;
+                        }
+                    }
+                    channel->setOperator(clientFd, clients[clientFd]);
+                    std::cout << "New operator added --> " << clients[clientFd]->nickname << std::endl;
                 }
             }
         }
@@ -147,8 +158,19 @@ void Commands::mode(int isAdmin, int newOperator, Channel* channel, std::vector<
                 else if (modes[i] == 'o')
                 {
                     std::map<int, Client*> clients = channel->getClients();
-                    channel->operators.erase(newOperator);
-                    std::cout << "Operator removed from --> " << clients[newOperator]->nickname << std::endl;
+                    std::string nickName = words[3];
+                    std::map<int, Client*>::const_iterator it;
+                    int clientFd;
+                    for (it = clients.begin(); it != clients.end(); ++it) 
+                    {
+                        if (it->second->username == nickName)
+                        {
+                            clientFd = it->first;
+                            break;
+                        }
+                    }
+                    channel->operators.erase(clientFd);
+                    std::cout << "Operator removed from --> " << clients[clientFd]->nickname << std::endl;
                 }
             }
         }
