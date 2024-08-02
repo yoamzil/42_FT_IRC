@@ -188,46 +188,46 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
             channels[channelName] = Channel(channelName);
             channels[channelName].setOperator(clientSocket, clientObj);
             channels[channelName].addClient(clientObj);
-			channels[channelName].setMode("");
+			// channels[channelName].mode;
         }
         else
         {
-		    if (channels[channelName].getMode() == "key")
-			{
-				if (words[2] == channels[channelName].key)
-				{
-					channels[channelName].addClient(clientObj);
-					clientObj.setChannelName(channelName);
-				}
-				else
-					std::cout << "Incorrect password" << std::endl;
-			}
-		   	else if (channels[channelName].getMode() == "invite")
-			{
-            	std::map<int, Client*>::iterator it = channels[channelName].inviteList.find(clientSocket);
-				if (it != channels[channelName].inviteList.end())
-				{
-					channels[channelName].addClient(clientObj);
-					clientObj.setChannelName(channelName);
-				}
-				else
-					std::cout << "You Should be invited to join this channel!" << std::endl;
-			}
-			else if (channels[channelName].getMode() == "limited")
-			{
-				if (channels[channelName].clients.size() < channels[channelName].getLimit())
-				{
-					channels[channelName].addClient(clientObj);
-					clientObj.setChannelName(channelName);
-				}
-				else
-					std::cout << "Channel Full" << std::endl;
-			}
-			else
-			{
+            if (channels[channelName].getModes().size() == 0)
+            {
             	channels[channelName].addClient(clientObj);
-				clientObj.setChannelName(channelName);
-			}
+                // clientObj.setChannelName(channelName);
+            }
+            else 
+            {
+                int modesCount = 0;
+                if (channels[channelName].find_mode("k"))
+                {
+                    if (words[2] == channels[channelName].key)
+                        modesCount++;
+                    else
+                        std::cout << "Incorrect password" << std::endl;
+                }
+                if (channels[channelName].find_mode("i"))
+                {
+                    std::map<int, Client*>::iterator it = channels[channelName].inviteList.find(clientSocket);
+                    if (it != channels[channelName].inviteList.end())
+                        modesCount++;
+                    else
+                        std::cout << "You Should be invited to join this channel!" << std::endl;
+                }
+                if (channels[channelName].find_mode("l"))
+                {
+                    if (channels[channelName].clients.size() < channels[channelName].getLimit())
+                        modesCount++;
+                    else
+                        std::cout << "Channel Full" << std::endl;
+                }
+                if (modesCount == channels[channelName].getModes().size())
+                {
+                    channels[channelName].addClient(clientObj);
+                    // clientObj.setChannelName(channelName);
+                }
+            }
         }
 	}
 		std::map<std::string, Channel>::iterator it = channels.find(channelName);

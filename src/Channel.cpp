@@ -68,17 +68,31 @@ void Channel::setKey(std::string newKey)
     key = newKey;
 }
 
-// Channel::Channel(Channel const &src)
-// {
-// 	std::cout << "Channel : copy constructor called" << std::endl;
-// 	*this = src;
-// }
-// Channel & Channel::operator=(Channel const &src)
-// {
-// 	std::cout << "Channel : assignation operator called" << std::endl;
-// 	if (this != & src)
-// 	{
-// 		*this = src;
-// 	}
-//     return (*this);
-// }
+int	Channel::find_mode(std::string mode) 
+{
+    for (std::vector<std::string>::iterator it = modes.begin(); it != modes.end(); ++it) {
+        if (*it == mode) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int Channel::getLimit()
+{
+    return (limit);
+}
+void Channel::setLimit(int newLimit)
+{
+    limit = newLimit;
+}
+
+std::map<int, Client*> Channel::getOperators()
+{
+    return (operators);
+}
+
+std::map<int, Client*> Channel::getInviteList()
+{
+    return (inviteList);
+}

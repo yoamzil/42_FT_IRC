@@ -22,7 +22,7 @@ void Commands::kick(int isAdmin, int toKick, Channel* channel) {
 
 void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
 {
-    if (channel->mode == "INVITE")
+    if (channel->find_mode("i"))
     {
         std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
         if (it != channel->operators.end())
@@ -46,7 +46,7 @@ void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
 {
     if (newTopic != "")
     {
-        if (channel->mode == "TOPIC")
+        if (channel->find_mode("t"))
         {
             std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
             if (it != channel->operators.end())
@@ -73,13 +73,91 @@ void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
     }
 }
 
-void Commands::mode(Channel* channel, std::vector<std::string> words)
+void Commands::mode(int isAdmin, int newOperator, Channel* channel, std::vector<std::string> words)
 {
-    if (words[2][0] == '+')
+    std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
+    if (it != channel->operators.end())
     {
-        
+        if (words[2][0] == '+')
+        {
+            std::string modes = words[2];
+            for (int i = 1; modes[i] != '\0'; i++)
+            {
+                if (modes[i] == 'k')
+                {
+                    channel->key = words[3];
+                    channel->modes.push_back("k");
+                    std::cout << "Channel password set to " << channel->key << std::endl;
+                }
+                else if (modes[i] == 'i')
+                {
+                    channel->modes.push_back("i");
+                    std::cout << "Channel is now invite only " << std::endl;
+                }
+                else if (modes[i] == 'l')
+                {
+                    channel->limit = atoi(words[3].c_str());
+                    std::cout << "Channel limit is set to " << channel->limit << std::endl;
+                }
+                else if (modes[i] == 'o')
+                {
+                    std::map<int, Client*> clients = channel->getClients();
+                    channel->setOperator(newOperator, clients[newOperator]);
+                    std::cout << "New operator added --> " << clients[newOperator]->nickname << std::endl;
+                }
+            }
+        }
+        else if (words[2][0] == '-')
+        {
+            std::string modes = words[2];
+            for (int i = 1; modes[i] != '\0'; i++)
+            {
+                if (modes[i] == 'k')
+                {
+                    std::vector<std::string>::iterator it;
+                    for (it = channel->modes.begin(); it != channel->modes.end(); ++it)
+                    {
+                        if (*it == "k")
+                            it = channel->modes.erase(it);
+                    } 
+                    channel->key.clear();
+                    std::cout << "Channel password removed"<< std::endl;
+                }
+                else if (modes[i] == 'i')
+                {
+                    std::vector<std::string>::iterator it;
+                    for (it = channel->modes.begin(); it != channel->modes.end(); ++it)
+                    {
+                        if (*it == "i")
+                            it = channel->modes.erase(it);
+                    }
+                    std::cout << "Invite only mode removed"<< std::endl;
+                }
+                else if (modes[i] == 'l')
+                {
+                    std::vector<std::string>::iterator it;
+                    for (it = channel->modes.begin(); it != channel->modes.end(); ++it)
+                    {
+                        if (*it == "l")
+                            it = channel->modes.erase(it);
+                    } 
+                    channel->setLimit(0);
+                    std::cout << "Channel limit removed"<< std::endl;
+                }
+                else if (modes[i] == 'o')
+                {
+                    std::map<int, Client*> clients = channel->getClients();
+                    channel->operators.erase(newOperator);
+                    std::cout << "Operator removed from --> " << clients[newOperator]->nickname << std::endl;
+                }
+            }
+        }
     }
-    else if (words[2][0] == '-')
+    else
+    {
+        std::cout << "You have to be an Operator to proceed this operation" << std::endl;
+        return ;
+    }
 }
 
 Commands::~Commands() {
