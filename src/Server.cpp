@@ -84,7 +84,7 @@ std::vector<std::string> splitString1(const std::string& str) {
     return result;
 }
 
-void	Server::authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words)
+void	Server::authentication(Client* clientObj, int clientSocket, std::vector<std::string> & words)
 {
 	if (words[0] == "PASS")
 	{
@@ -152,7 +152,7 @@ void Server::broadcastMessage(const std::string& channelName, const std::string&
         std::map<int, Client*> channelClients = channel.getClients();
 		// std::string message1 = "353 " + client[clientSocket]->getNickname() + " = " + channelName + " :" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost\r\n";
 		// std::string message2 = "366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-		std::cout << "352 " << channelName << std::endl;
+		// std::cout << "352 " << channelName << std::endl;
 		std::string  msg = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost " + message + "\r\n";
         for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
             Client* cliente = clientIt->second;
@@ -174,7 +174,7 @@ void Server::sendMessage(int clientSocket, const std::string& message) {
 
 
 
-void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
+void Server::joinChannel(int clientSocket, std::string& channelName) {
 	// std::cout << "youtube" << std::endl;
 	// std::string message = ":haarab!~hamza@10.11.7.6 JOIN #hh * :realname\r\n";
 	// std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
@@ -235,11 +235,10 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName) {
 
 
 
-void Server::handleMessage(__unused int clientSocket, const std::string& message)
+void Server::handleMessage(int clientSocket, const std::string& message)
 {
 	// std::string input = "this\r\nis::a::test\r\nstring";
 	Client* clientObj;
-
 
 	std::vector<std::string> input;
 	if (client.find(clientSocket) != client.end()) {
@@ -247,48 +246,96 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
         clientObj = client[clientSocket];
         // Use clientObj to interact with the client
     }
-		if (message.find("\r\n"))
+	if (message.find("\r\n"))
+	{
+		std::vector<std::string> words;
+		std::string delimiter = "\r\n";
+		input = splitString(message, delimiter);
+		if (input.size() > 1)
 		{
-			std::vector<std::string> words;
-			std::string delimiter = "\r\n";
-			input = splitString(message, delimiter);
 			for (size_t i = 0; i < input.size() - 1; ++i) {
 				words = splitString1(input[i]);
 				authentication(clientObj, clientSocket, words);
 			}
-			if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0" && clientObj->getStatus() == 0)
-			{
-				// std::string message = "001 " + clientObj->getNickname() + " :Welcome to the Network\r\n";
-				// sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
-				clientObj->setFd(clientSocket);
-				clientObj->setAuthentication();
-				// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
-			}
-			if (clientObj->getAuthentication() == 1)
-			{
+		}
+		else{
+			words = splitString1(input[0]);
+			authentication(clientObj, clientSocket, words);
+		}
 
-				// Channel* channelObj;
-				if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
-				{
-					// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
-					std::cout <<  "Welcome " << clientSocket << std::endl;
-					joinChannel(clientSocket, words[1]);
-				}
-				else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
-				{
-					std::cout << "hamza wa hamza" << std::endl;
-					// Replace clientObj->getChannelName() with the appropriate function call
-					broadcastMessage(client[clientSocket]->getChannelName(), message, clientSocket);
-				}
-			}
-			if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
+		if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0" && clientObj->getStatus() == 0)
+		{
+			// std::string message = "001 " + clientObj->getNickname() + " :Welcome to the Network\r\n";
+			// sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
+			clientObj->setFd(clientSocket);
+			clientObj->setAuthentication();
+			// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
+		}
+		if (clientObj->getAuthentication() == 1)
+		{
+
+			// Channel* channelObj;
+			if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
-				// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
-				std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
-				sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
-				clientObj->setStatus(1);
+				// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
+				std::cout <<  "Welcome " << clientSocket << std::endl;
+				joinChannel(clientSocket, words[1]);
+			}
+			else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
+			{
+				if (!message.find("PRIVMSG"))
+				{
+					broadcastMessage(words[1], message, clientSocket);
+				}
+				
 			}
 		}
+		if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
+		{
+			// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
+			std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
+			sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
+			clientObj->setStatus(1);
+		}
+	}
+	// else
+	// {
+	// 	std::vector<std::string> word = splitString1(message);
+	// 	std::cout << "hamza" << std::endl;
+	// 	authentication(clientObj, clientSocket, word);
+	// 	if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0" && clientObj->getStatus() == 0)
+	// 	{
+	// 		// std::string message = "001 " + clientObj->getNickname() + " :Welcome to the Network\r\n";
+	// 		// sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
+	// 		clientObj->setFd(clientSocket);
+	// 		clientObj->setAuthentication();
+	// 		// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
+	// 	}
+	// 	if (clientObj->getAuthentication() == 1)
+	// 	{
+
+	// 		// Channel* channelObj;
+	// 		if ((word[0] == "/join" || word[0] == "/JOIN") && !word[1].empty() && clientObj->getStatus() == 1)
+	// 		{
+	// 			// std::cout << "hamza : " << word[1].erase(0, 1) << std::endl;
+	// 			std::cout <<  "Welcome " << clientSocket << std::endl;
+	// 			joinChannel(clientSocket, word[1]);
+	// 		}
+	// 		else if((word[0] != "/join" || word[0] != "/JOIN") && clientObj->getStatus() == 1)
+	// 		{
+	// 			// Replace clientObj->getChannelName() with the appropriate function call
+	// 			// std::cout << "hamza : " << message << "->>>> aarab :" << word[1] << std::endl;
+	// 			broadcastMessage(word[1], message, clientSocket);
+	// 		}
+	// 	}
+	// 	if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
+	// 	{
+	// 		// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
+	// 		std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
+	// 		sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
+	// 		clientObj->setStatus(1);
+	// 	}
+	// }
 		// std::string str = "hamza";
 		// send(clientSocket, str.c_str(), str.size(), 0);
 		// std::vector<std::string> words = splitString1(message);
@@ -396,7 +443,7 @@ void    Server::start()
 void    Server::removeClient(int clientSocket)
 {
     close(clientSocket);
-    clients.erase(clientSocket);
+    client.erase(clientSocket);
     for (size_t i = 0; i < clientSockets.size(); i++)
     {
         if (clientSockets[i].fd == clientSocket)

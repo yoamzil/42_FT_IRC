@@ -3,6 +3,10 @@
 
 #include <sstream>      // std::istringstream
 #include <string>
+#include <stdlib.h>
+#include <cerrno>
+#include <errno.h>
+#include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <sys/socket.h>
@@ -28,7 +32,7 @@ class Server
 
         int                         serverSocket;
         std::vector<pollfd>         clientSockets;
-        std::map<int, std::string>  clients;
+        // std::map<int, std::string>  clients;
 		std::map <int, Client *> client;
 		// std::map <int, Channel *> channel;
 		 std::map<std::string, Channel> channels;
@@ -50,7 +54,7 @@ class Server
 		void		joinChannel(int clientSocket, std::string& channel);
 		void		leaveChannel(int clientSocket, const std::string& channel);
 		void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
-		void		authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words);
+		void		authentication(Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		// void		Message(int clientSocket, const std::string& message);
         void start();
 		void sendMessage(int clientSocket, const std::string& message);
