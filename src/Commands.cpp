@@ -22,8 +22,10 @@ void Commands::kick(int isAdmin, int toKick, Channel* channel) {
 
 void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
 {
+    std::cout << "here 3\n";
     if (channel->find_mode("i"))
     {
+        std::cout << "here 4\n";
         std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
         if (it != channel->operators.end())
         {
@@ -37,6 +39,7 @@ void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
     }
     else 
     {
+        std::cout << "here 5\n";
         channel->addToInviteList(newMember);
         std::cout << "User added to invite list" << std::endl;
     }
