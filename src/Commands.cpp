@@ -104,7 +104,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     std::map<int, Client*> clients = channel->getClients();
                     std::string nickName = words[3];
                     std::map<int, Client*>::const_iterator it;
-                    int clientFd;
+                    int clientFd = 0;
                     for (it = clients.begin(); it != clients.end(); ++it) 
                     {
                         if (it->second->username == nickName)

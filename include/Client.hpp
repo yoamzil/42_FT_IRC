@@ -15,7 +15,7 @@ class Client
 		std::string username;
 		std::string nickname;
 		std::string pass;
-		std::string _channelName;
+		std::vector<std::string> _channelName;
 		bool		correctPassword;
 		bool		status;
 
@@ -39,6 +39,7 @@ class Client
 		bool 	getAuthentication();
 		void	setAuthentication();
 		std::string getChannelName() const;
+		std::string getChannelName(const std::string & message) const;
 		void setChannelName(const std::string& channelName);
 		~Client();
 		void start();

@@ -85,14 +85,15 @@ bool 	Client::getAuthentication()
 // }
 
 
-std::string  Client::getChannelName() const
+std::string  Client::getChannelName(const std::string & message) const
 {
-	return (this->_channelName);
+
+	return (message);
 }
 
 void Client::setChannelName(const std::string& channelName)
 {
-	this->_channelName = channelName;
+	this->_channelName.push_back(channelName);
 }
 
 bool Client::getStatus()
