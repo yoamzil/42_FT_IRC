@@ -321,6 +321,14 @@ void Server::handleMessage(__unused int clientSocket, const std::string& message
 					        std::cout << "No user found" << std::endl;
 				    }
                 }
+                else if (words[0] == "INVITE")
+                {
+                    
+                }
+                else if (words[0] == "TOPIC")
+                {
+
+                }
 				else if (words[0] == "MODE")
 				{
          			std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
