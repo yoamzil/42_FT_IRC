@@ -97,7 +97,8 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 modes_str += it_modes->c_str();
             }
             // std::cout << "----" + modes_str + "----\n";
-            std::string modeMessage = ": 324 " + it->second->getNickname() + " " + channel->getName() + " +n\r\n";
+            // std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +i\r\n";
+            std::string modeMessage = ": 324 " + it->second->getNickname() + "!" + it->second->getUsername() + " " + channel->getName() + " +n\r\n";
             send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
         }
         else if (!words[2].empty() && words[2][0] == '+')
@@ -124,6 +125,8 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 else if (modes[i] == 'l')
                 {
                     channel->limit = atoi(words[3].c_str());
+                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +l " + words[3].c_str() + "\r\n";
+                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                     std::cout << "Channel limit is set to " << channel->limit << std::endl;
                 }
                 else if (modes[i] == 'o')
@@ -140,8 +143,17 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                             break;
                         }
                     }
-                    channel->setOperator(clientFd, clients[clientFd]);
-                    std::cout << "New operator added --> " << clients[clientFd]->nickname << std::endl;
+                    if (clientFd != 0)
+                    {
+                        channel->setOperator(clientFd, clients[clientFd]);
+                        std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +o " + words[3].c_str() + "\r\n";
+                        send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                    }
+                    else
+                    {
+
+                        std::cout << "New operator added --> " << clients[clientFd]->nickname << std::endl;
+                    }
                 }
             }
         }

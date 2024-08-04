@@ -268,7 +268,7 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
             else 
             {
                 std::cout << "invite 2\n";
-                int modesCount = 0;
+                int modesCount = 1;
                 if (channels[channelName].find_mode("k"))
                 {
                     if (words[2] == channels[channelName].key)
@@ -309,6 +309,9 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
                         std::cout << "Channel Full" << std::endl;
                 }
                 int modes = channels[channelName].getModes().size();
+                std::cout << "........." << modes << std::endl;
+                std::vector<std::string> modat = channels[channelName].getModes();
+                std::cout << "......" << modat[0] << std::endl;
                 if (modesCount == modes)
                 {
                     std::cout << "modesCount --> " << modesCount << std::endl;
