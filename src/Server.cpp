@@ -1,5 +1,6 @@
 #include "../include/Server.hpp"
 #include <ostream>
+#include <cerrno>
 
 void    Server::setNonBlocking(int socket)
 {
@@ -177,31 +178,92 @@ void Server::sendMessage(int clientSocket, const std::string& message) {
 
 void Server::joinChannel(int clientSocket, __unused std::string& channelName, std::vector<std::string> words)
 {
-	std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
-	send(clientSocket, message.c_str(), message.size(), 0);
+	// std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+    // send(clientSocket, message.c_str(), message.size(), 0);
     if (client.find(clientSocket) != client.end()) 
 	{
+        std::cout << "f join \n";
         Client* clientObj = client[clientSocket];
-        
-        std::cout << "----------Channel Modes--------\n";
-        std::vector<std::string> channel_modes = channels[channelName].getModes();
-        std::vector<std::string>::iterator it_modes;
-        for (it_modes = channel_modes.begin(); it_modes != channel_modes.end(); ++it_modes)
-        {
-            std::cout << "***(" << it_modes->c_str() << ")***\n";
-        }
-        std::cout << "---------------------------\n";
 
         // Check if the channel exists, if not, create it
-        if (channels.find(channelName) == channels.end()) {
+        if (channels.find(channelName) == channels.end()) 
+        {
+            std::cout << "channel creation\n";
             channels[channelName] = Channel(channelName);
-            channels[channelName].setOperator(clientSocket, clientObj);
             channels[channelName].addClient(clientObj);
+            channels[channelName].setOperator(clientSocket, clientObj);
+
+            //first part
+            std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+            send(clientSocket, message.c_str(), message.size(), 0);
+
+            //Done by hamza trying to fit it somewhere in coda
+            std::map<std::string, Channel>::iterator it = channels.find(channelName);
+            if (it != channels.end()) 
+            {
+                Channel& channel = it->second;
+                std::map<int, Client*> channelClients = channel.getClients();
+                for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI)
+                {
+                    Client* cliente = clientI->second;
+
+                    std::string msg;
+                    for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt)
+                    {
+                        Client* clien = clientIt->second;
+                        if (cliente->getFd() != clien->getFd())
+                            msg = msg + " " + clien->getNickname();
+                    }
+                    std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+                    std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+                    send(cliente->getFd(), message1.c_str(), message1.size(), 0);
+                    send(cliente->getFd(), message2.c_str(), message2.size(), 0);
+                }
+            }
         }
         else
         {
+            std::cout << "----------Channel Modes--------\n";
+            std::vector<std::string> channel_modes = channels[channelName].getModes();
+            std::vector<std::string>::iterator it_modes;
+            for (it_modes = channel_modes.begin(); it_modes != channel_modes.end(); ++it_modes)
+            {
+                std::cout << "***(" << it_modes->c_str() << ")***\n";
+            }
+            std::cout << "---------------------------\n";
+
             if (channels[channelName].getModes().size() == 0)
+            {
             	channels[channelName].addClient(clientObj);
+                
+                //first part
+                std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+                send(clientSocket, message.c_str(), message.size(), 0);
+            
+                //Done by hamza trying to fit it somewhere in coda
+                std::map<std::string, Channel>::iterator it = channels.find(channelName);
+                if (it != channels.end()) 
+                {
+                    Channel& channel = it->second;
+                    std::map<int, Client*> channelClients = channel.getClients();
+                    for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI)
+                    {
+                        Client* cliente = clientI->second;
+
+                        std::string msg;
+                        for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt)
+                        {
+                            Client* clien = clientIt->second;
+                            if (cliente->getFd() != clien->getFd())
+                                msg = msg + " " + clien->getNickname();
+                        }
+                        std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+                        std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+                        send(cliente->getFd(), message1.c_str(), message1.size(), 0);
+                        send(cliente->getFd(), message2.c_str(), message2.size(), 0);
+                    }
+                }
+            }
             else 
             {
                 std::cout << "invite 2\n";
@@ -255,11 +317,46 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
                     }
                     std::cout << "---------------------------\n";
                     channels[channelName].addClient(clientObj);
+
+                    //first part
+                    std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
+                    send(clientSocket, message.c_str(), message.size(), 0);
+            
+                    //Done by hamza trying to fit it somewhere in coda
+                    std::map<std::string, Channel>::iterator it = channels.find(channelName);
+                    if (it != channels.end()) 
+                    {
+                        Channel& channel = it->second;
+                        std::map<int, Client*> channelClients = channel.getClients();
+                        for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI)
+                        {
+                            Client* cliente = clientI->second;
+
+                            std::string msg;
+                            for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt)
+                            {
+                                Client* clien = clientIt->second;
+                                if (cliente->getFd() != clien->getFd())
+                                    msg = msg + " " + clien->getNickname();
+                            }
+                            std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+                            std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+                            send(cliente->getFd(), message1.c_str(), message1.size(), 0);
+                            send(cliente->getFd(), message2.c_str(), message2.size(), 0);
+                        }
+                    }
                 }
             }
         }
 	}
-	
+	std::cout << "---------Operators--------\n";
+    std::map<int, Client*> admins = channels[channelName].getOperators();
+    std::map<int, Client*>::iterator it_operator;
+    for (it_operator = admins.begin(); it_operator != admins.end(); ++it_operator)
+    {
+        std::cout << "***(" << it_operator->second->getNickname() << ")***\n";
+    }
+    std::cout << "---------------------------\n\n";
 	std::cout << "---------Invite List--------\n";
     std::map<int, Client*> inviteList = channels[channelName].getInviteList();
     std::map<int, Client*>::iterator it_invite;
@@ -268,28 +365,28 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
         std::cout << "***(" << it_invite->second->getNickname() << ")***\n";
     }
     std::cout << "---------------------------\n";
-	std::map<std::string, Channel>::iterator it = channels.find(channelName);
-	if (it != channels.end()) 
-	{
-		Channel& channel = it->second;
-		std::map<int, Client*> channelClients = channel.getClients();
-		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI)
-		{
-			Client* cliente = clientI->second;
+	// std::map<std::string, Channel>::iterator it = channels.find(channelName);
+	// if (it != channels.end()) 
+	// {
+	// 	Channel& channel = it->second;
+	// 	std::map<int, Client*> channelClients = channel.getClients();
+	// 	for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI)
+	// 	{
+	// 		Client* cliente = clientI->second;
 
-			std::string msg;
-			for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt)
-			{
-				Client* clien = clientIt->second;
-				if (cliente->getFd() != clien->getFd())
-					msg = msg + " " + clien->getNickname();
-			}
-			std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
-			std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
-			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
-		}
-    }
+	// 		std::string msg;
+	// 		for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt)
+	// 		{
+	// 			Client* clien = clientIt->second;
+	// 			if (cliente->getFd() != clien->getFd())
+	// 				msg = msg + " " + clien->getNickname();
+	// 		}
+	// 		std::string message1 = ": 353 " + client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+	// 		std::string message2 = ": 366 " + client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+	// 		send(cliente->getFd(), message1.c_str(), message1.size(), 0);
+	// 		send(cliente->getFd(), message2.c_str(), message2.size(), 0);
+	// 	}
+    // }
 }
 
 
@@ -338,12 +435,13 @@ void Server::handleMessage(int clientSocket, const std::string& message)
 			// Channel* channelObj;
 			if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
-				// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
-				std::cout <<  "Welcome " << clientSocket << std::endl;
+				std::cout << "Entering join\n";
+				// std::cout <<  "Welcome " << clientSocket << std::endl;
 				joinChannel(clientSocket, words[1], words);
 			}
 			else if (words[0] == "KICK")
 			{
+                std::cout << "makanaklch loz 1\n";
 				std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
 				if (channelIt != channels.end()) 
 				{
@@ -366,9 +464,11 @@ void Server::handleMessage(int clientSocket, const std::string& message)
 			}
 			else if (words[0] == "MODE")
 			{
+                std::cout << "makanaklch loz 2\n";
 				std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
 				if (channelIt != channels.end()) 
 				{
+                    std::cout << "Entering mode\n";
 					Channel* channelPtr = &(channelIt->second);
 					mode(clientSocket, channelPtr,words);
 				}

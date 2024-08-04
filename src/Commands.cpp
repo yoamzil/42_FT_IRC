@@ -30,6 +30,8 @@ void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
         if (it != channel->operators.end())
         {
             channel->addToInviteList(newMember);
+            std::string message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
+	        send(isAdmin, message.c_str(), message.size(), 0);
         }
         else
         {
@@ -41,6 +43,8 @@ void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
     {
         std::cout << "here 5\n";
         channel->addToInviteList(newMember);
+        std::string message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
+	    send(isAdmin, message.c_str(), message.size(), 0);
         std::cout << "User added to invite list" << std::endl;
     }
 }
@@ -81,8 +85,14 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
     std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
     if (it != channel->operators.end())
     {
-        if (words[2][0] == '+')
+        std::cout << "In mode function\n";
+        if (words.size() == 2)
         {
+            std::cout << "coming soon\n";
+        }
+        else if (!words[2].empty() && words[2][0] == '+')
+        {
+            std::cout << "In mode function in + \n";
             std::string modes = words[2];
             for (int i = 1; modes[i] != '\0'; i++)
             {
@@ -94,6 +104,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 }
                 else if (modes[i] == 'i')
                 {
+                    std::cout << "In mode function in invite condition \n";
                     channel->modes.push_back("i");
                     std::cout << "Channel is now invite only " << std::endl;
                 }
@@ -121,7 +132,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 }
             }
         }
-        else if (words[2][0] == '-')
+        else if (!words[2].empty() && words[2][0] == '-')
         {
             std::string modes = words[2];
             for (int i = 1; modes[i] != '\0'; i++)
@@ -180,7 +191,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
     }
     else
     {
-        std::cout << "You have to be an Operator to proceed this operation" << std::endl;
+        std::cout << "You have to be an Operator to proceed this operation 5" << std::endl;
         return ;
     }
 }

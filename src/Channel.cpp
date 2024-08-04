@@ -41,6 +41,7 @@ std::map<int, Client*> Channel::getClients() {
 
 void Channel::setOperator(int clientSocket, Client* newOperator)
 {
+    std::cout << "3iiiw\n";
     operators.insert(std::make_pair(clientSocket, newOperator));
 }
 
