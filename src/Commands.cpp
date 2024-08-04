@@ -88,7 +88,17 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
         std::cout << "In mode function\n";
         if (words.size() == 2)
         {
-            std::cout << "coming soon\n";
+            std::vector<std::string> channel_modes = channel->getModes();
+            std::vector<std::string>::iterator it_modes = channel_modes.begin();
+            std::string modes_str = "+";
+            for (long unsigned i = 0; i < channel_modes.size(); i++)
+            {
+                // std::cout << it_modes->c_str() << std::endl;
+                modes_str += it_modes->c_str();
+            }
+            // std::cout << "----" + modes_str + "----\n";
+            std::string modeMessage = ": 324 " + it->second->getNickname() + " " + channel->getName() + " +n\r\n";
+            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
         }
         else if (!words[2].empty() && words[2][0] == '+')
         {
@@ -107,6 +117,9 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     std::cout << "In mode function in invite condition \n";
                     channel->modes.push_back("i");
                     std::cout << "Channel is now invite only " << std::endl;
+
+                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +i\r\n";
+                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                 }
                 else if (modes[i] == 'l')
                 {

@@ -192,6 +192,7 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
             channels[channelName] = Channel(channelName);
             channels[channelName].addClient(clientObj);
             channels[channelName].setOperator(clientSocket, clientObj);
+            channels[channelName].setModes("n");
 
             //first part
             std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
@@ -235,7 +236,7 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
             if (channels[channelName].getModes().size() == 0)
             {
             	channels[channelName].addClient(clientObj);
-                
+
                 //first part
                 std::string message = ":" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost JOIN " + channelName + " * :realname\r\n";
                 send(clientSocket, message.c_str(), message.size(), 0);
@@ -293,7 +294,11 @@ void Server::joinChannel(int clientSocket, __unused std::string& channelName, st
                         modesCount++;
                     }
                     else
+                    {
+                        std::string message = ": 473 " + client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
+                        send(clientSocket, message.c_str(), message.size(), 0);
                         std::cout << "You Should be invited to join this channel!" << std::endl;
+                    }
                 }
                 if (channels[channelName].find_mode("l"))
                 {
