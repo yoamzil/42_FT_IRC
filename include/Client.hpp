@@ -33,7 +33,8 @@ class Client
 		bool		getStatus();
 		void		setStatus(int status);
 		bool 	check_password(std::string str);
-		void	setPassword(std::string Pass);
+		// void	setPassword(std::string Pass);
+		// std::string	getPassword();
 		void	setFd(int fd);
 		int 	getFd();
 		void	setCorrectPass();
@@ -47,7 +48,16 @@ class Client
 		std::string  getLocation() const;
 		void start();
 		void setLocation(const std::string& Location);
-		
+		std::vector<std::string> splitString(const std::string& str, const std::string& delimiter);
+		std::vector<std::string> splitString1(const std::string& str);
+		void sendMessage(int clientSocket, const std::string& message);
+		void sendList(Server *serverObj , int clientSocket, const std::string& channelName);
+		void joinChannel(Server *serverObj, int clientSocket, const std::string& channelName);
+		void		leaveChannel(Server *serverObj, int clientSocket, const std::string& channel);
+		void		broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket);
+		void		authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
+		void 		handleMessage(Server* serverObj, int clientSocket, const std::string& message);
+
 };
 
 #endif
