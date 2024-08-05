@@ -68,30 +68,13 @@ bool 	Client::getAuthentication()
 	return (this->_authentication);
 }
 
-
-// Client::Client(Client const &src)
-// {
-// 	std::cout << "Client : copy constructor called" << std::endl;
-// 	*this = src;
-// }
-// Client & Client::operator=(Client const &src)
-// {
-// 	std::cout << "Client : assignation operator called" << std::endl;
-// 	if (this != & src)
-// 	{
-// 		*this = src;
-// 	}
-//     return (*this);
-// }
-
-
 std::string  Client::getLocation() const
 {
 	return (this->_Location);
 }
-std::string  Client::getChannelName(const std::string& channelName) const
+std::vector<std::string>  Client::getChannelName() const
 {
-	return (channelName);
+	return (_channelNames);
 }
 
 void Client::setChannelName(const std::string& channelName)
@@ -112,4 +95,11 @@ bool Client::getStatus()
 void Client::setStatus(int status)
 {
 	this->status = status;
+}
+
+void Client::eraseClientChannel(const std::string& channelName)
+{
+	std::vector<std::string>::iterator it = std::find(_channelNames.begin(), _channelNames.end(), channelName);
+	if (it != _channelNames.end())
+		_channelNames.erase(it);
 }

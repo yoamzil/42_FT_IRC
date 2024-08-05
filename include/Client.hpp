@@ -40,8 +40,9 @@ class Client
 		bool 	correctpass();
 		bool 	getAuthentication();
 		void	setAuthentication();
-		std::string getChannelName(const std::string& channelName) const;
 		void setChannelName(const std::string& channelName);
+		std::vector<std::string> getChannelName() const;
+		void eraseClientChannel(const std::string& channelName);
 		~Client();
 		std::string  getLocation() const;
 		void start();

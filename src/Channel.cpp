@@ -1,6 +1,6 @@
 #include "../include/Channel.hpp"
 
-Channel::Channel(std::string& name) : name(name) {}
+Channel::Channel(const std::string& name) : name(name) {}
 
 void Channel::addClient(Client* client) {
     clients[client->getFd()] = client;
@@ -38,3 +38,8 @@ std::map<int, Client*> Channel::getClients() {
 // 	}
 //     return (*this);
 // }
+
+
+void Channel::removeClient(Client* client) {
+	clients.erase(client->getFd());
+}

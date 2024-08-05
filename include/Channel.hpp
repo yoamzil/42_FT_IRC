@@ -16,12 +16,12 @@ class Channel
 
 	public:
 		Channel();
-		Channel(std::string& name);
+		Channel(const std::string& name);
 		// Channel & operator=(Channel const &src);
 		// Channel(Channel const &src);
 		void addClient(Client* client);
 		// std::string getChannelName();
-		// void removeClient(int clientFd);
+		void removeClient(Client* client);
 		// Client* getClient(int clientFd);
 		std::map<int, Client*> getClients();
 		std::string getName();
