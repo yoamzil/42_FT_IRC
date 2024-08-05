@@ -30,8 +30,7 @@ class Server
         std::vector<pollfd>         clientSockets;
         std::map<int, std::string>  clients;
 		std::map <int, Client *> client;
-		// std::map <int, Channel *> channel;
-		 std::map<std::string, Channel> channels;
+		std::map<std::string, Channel> channels;
 
         // std::map<int, std::string>  nicknames;
         // std::map<std::string, std::vector<int> > channels;
@@ -54,6 +53,7 @@ class Server
 		// void		Message(int clientSocket, const std::string& message);
         void start();
 		void sendMessage(int clientSocket, const std::string& message);
+		Channel* findChannelByName(const std::string& channelName);
 
 };
 

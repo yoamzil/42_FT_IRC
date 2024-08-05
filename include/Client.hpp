@@ -12,10 +12,12 @@ class Client
     public:
 		int			_fd;
 		bool		_authentication;
+		std::string		_Location;
 		std::string username;
 		std::string nickname;
 		std::string pass;
-		std::string _channelName;
+		// std::string _channelName;
+		std::vector<std::string>  _channelNames;
 		bool		correctPassword;
 		bool		status;
 
@@ -38,10 +40,13 @@ class Client
 		bool 	correctpass();
 		bool 	getAuthentication();
 		void	setAuthentication();
-		std::string getChannelName() const;
+		std::string getChannelName(const std::string& channelName) const;
 		void setChannelName(const std::string& channelName);
 		~Client();
+		std::string  getLocation() const;
 		void start();
+		void setLocation(const std::string& Location);
+		
 };
 
 #endif
