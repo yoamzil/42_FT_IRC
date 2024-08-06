@@ -137,9 +137,9 @@ void    Server::acceptClient()
 	std::cout << "New client connected " << clientSocket << std::endl;
 }
 
-void    Server::start()
+void    Server::start(Server*	serverObj)
 {
-	Server* serverObj(this);
+	
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
 	// Client client;
     while (true)

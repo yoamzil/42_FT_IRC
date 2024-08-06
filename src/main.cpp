@@ -12,7 +12,8 @@ int main(int argc, char* argv[])
     std::string     password    = argv[2];
 
     Server      ircServer(port, password);
-    ircServer.start();
+	Server*		serverObj = &ircServer;
+    ircServer.start(serverObj);
 
     return (0);
 }

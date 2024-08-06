@@ -6,8 +6,6 @@ Client::Client()
 	this->correctPassword = 0;
 	this->_authentication = 0;
 	this->status = 0;
-
-	
 }
 
 void	Client::setFd(int fd)
@@ -176,7 +174,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
         serverObj->channels[channelName].addClient(clientObj);
 		clientObj->setChannelName(channelName);
 		std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
-		std::cout << message << std::endl;
+		// std::cout << message << std::endl;
 		send(clientSocket, message.c_str(), message.size(), 0);
 
 	}
@@ -247,7 +245,7 @@ void Client::broadcastMessage(Server *serverObj, const std::string& channelName,
 
 void	Client::authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words)
 {
-	if (words[0] == "PASS")
+	if (words[0] == "PASS" && words.size() == 2)
 	{
 		if (words[1] == serverObj->getPassword())
 		{
@@ -260,7 +258,7 @@ void	Client::authentication(Server* serverObj, Client* clientObj, int clientSock
 			std::cout << clientSocket << " : password  incorrect" << std::endl;
 		}
 	}
-	else if (words[0] == "NICK" && clientObj->correctpass() == 1 && words[1] != "\0")
+	else if (words[0] == "NICK" && clientObj->correctpass() == 1 && !words[1].empty() && words.size() == 2)
 	{
 		// int i = 0;
 		for (std::map<int, Client*>::iterator clientIt = serverObj->client.begin(); clientIt != serverObj->client.end(); ++clientIt) {
@@ -284,7 +282,6 @@ void	Client::authentication(Server* serverObj, Client* clientObj, int clientSock
 				std::cout <<  "change a Nick  : " << words[1] << " , Id : " << clientObj->getFd() << " correct ID : " << client->correctpass()  << std::endl;
 				return;
 			}
-
 			else if (client->getNickname() == words[1])
 			{
 				std::cout <<  "Nick already exist : " << words[1] <<  " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
@@ -297,8 +294,17 @@ void	Client::authentication(Server* serverObj, Client* clientObj, int clientSock
 	}
 	else if (words[0] == "USER" && clientObj->correctpass() == 1 && !words[1].empty())
 	{
-		clientObj->setUsername(words[1]);
-		std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
+		if (words.size() == 5)
+		{
+			clientObj->setUsername(words[1]);
+			clientObj->setLocation(words[3]);
+			std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
+		}
+		else if (words.size() != 5)
+		{
+			std::cout << "please enter the correct USER" << std::endl;
+		}
+		
 	}
 }
 
@@ -331,20 +337,15 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 
 		if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0" && clientObj->getStatus() == 0)
 		{
-			// std::string message = "001 " + clientObj->getNickname() + " :Welcome to the Network\r\n";
-			// sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
 			clientObj->setFd(clientSocket);
 			clientObj->setAuthentication();
-			// std::cout << clientObj->getFd()<< " : file discreptor" << std::endl;
 		}
 		if (clientObj->getAuthentication() == 1)
 		{
 
-			// Channel* channelObj;
 			if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
-				// std::cout << "hamza : " << words[1].erase(0, 1) << std::endl;
-				// std::cout <<  "Welcome " << clientSocket << std::endl;
+
 				if (words[1][0] == '#')
 				{
 					clientObj->joinChannel(serverObj, clientSocket, words[1]);
@@ -354,7 +355,6 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 					std::string message = ": 403 * " + clientObj->getNickname() + " " + words[1] + " :No such channel\r\n";
 					clientObj->sendMessage(clientSocket, message);
 				}
-				// joinChannel(clientSocket, words[1]);
 			}
 			else if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
@@ -366,7 +366,6 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 				else if (words[1][0] != '#')
 				{
 					std::string message = ": not remove\r\n";
-					// sendMessage(clientSocket, message);
 				}
 			}
 			else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
@@ -381,7 +380,7 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 		if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
 		{
 			// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
-			std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@localhost\r\n";
+			std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@" + serverObj->client[clientSocket]->getLocation() + "\r\n";
 			clientObj->sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
 			clientObj->setStatus(1);
 		}

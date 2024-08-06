@@ -57,7 +57,7 @@ class Server
 		// void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
 		void		authentication(Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		// void		Message(int clientSocket, const std::string& message);
-        void start();
+        void start(Server*	serverObj);
 		
 		Channel* findChannelByName(const std::string& channelName);
 
