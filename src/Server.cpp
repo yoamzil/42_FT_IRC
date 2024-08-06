@@ -70,10 +70,10 @@ Server::Server(int port, const std::string& password) : port(port), password(pas
     clientSockets.push_back(serverPollFd);
 }
 
-// Server::~Server()
-// {
-// 	close(serverSocket);
-// }
+Server::~Server()
+{
+	close(serverSocket);
+}
 
 std::string Server::getPassword()
 {

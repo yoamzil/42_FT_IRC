@@ -46,6 +46,7 @@ class Server
         void        setNonBlocking(int socket);
     public:
 		Server();
+		~Server();
 		Server(Server const &src);
 		Server & operator=(Server const &src);
 		std::string	getPassword();
