@@ -30,13 +30,19 @@ void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
         if (it != channel->operators.end())
         {
             channel->addToInviteList(newMember);
-            std::string message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
-	        send(isAdmin, message.c_str(), message.size(), 0);
+            std::string message;
+            // message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
+	        // send(isAdmin, message.c_str(), message.size(), 0);
+            message = ":" + channel->clients[isAdmin]->getNickname() + "!" + channel->clients[isAdmin]->getUsername() + "@localhost INVITE " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
+            send(isAdmin, message.c_str(), message.size(), 0);
+            // :irc.example.com 341 john alice #examplechannel
+            message = ": 341 " + channel->clients[isAdmin]->getNickname() + " " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
+            send(isAdmin, message.c_str(), message.size(), 0);
         }
         else
         {
-            std::cout << "You have to be an Operator to proceed this operation" << std::endl;
-            return ;
+            std::string message = ": 482 " + newMember->getNickname() + " " + channel->getName() + " :You're not channel operator\r\n";
+	        send(isAdmin, message.c_str(), message.size(), 0);
         }
     }
     else 
