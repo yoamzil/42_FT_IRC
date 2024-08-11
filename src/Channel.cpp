@@ -1,4 +1,5 @@
 #include "../include/Channel.hpp"
+#include <iostream>
 
 Channel::Channel(std::string& name) : name(name) {}
 
@@ -53,6 +54,19 @@ void Channel::addToInviteList(Client* newMember)
 void Channel::setModes(std::string newMode)
 {
     modes.push_back(newMode);
+}
+
+void Channel::deleteMode(std::string toDelete)
+{
+    std::vector<std::string>::iterator iter;
+    for (iter = modes.begin(); iter != modes.end(); ++iter)
+    {
+        if (*iter == toDelete)
+        {
+            iter = modes.erase(iter);
+            break;
+        }
+    }
 }
 
 std::vector<std::string> Channel::getModes()

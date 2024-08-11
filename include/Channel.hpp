@@ -32,6 +32,7 @@ class Channel
 		std::map<int, Client*> getInviteList();
 		void setTopic(std::string newTopic);
 		void setModes(std::string newMode);
+		void deleteMode(std::string newMode);
 		void setKey(std::string newPassword);
 		void setLimit(int newLimit);
 		void setOperator(int clientSocket, Client* newOperator);

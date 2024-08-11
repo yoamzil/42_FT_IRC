@@ -449,10 +449,11 @@ void Server::handleMessage(int clientSocket, const std::string& message)
 			}
 			else if (words[0] == "KICK")
 			{
-                std::cout << "makanaklch loz 1\n";
+                std::cout << "entering kick \n";
 				std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
 				if (channelIt != channels.end()) 
 				{
+				    std::cout << "entering kick in if \n";
 					Channel* channelPtr = &(channelIt->second);
 					bool found = false;
 					std::map<int, Client*>::iterator it;
@@ -472,7 +473,6 @@ void Server::handleMessage(int clientSocket, const std::string& message)
 			}
 			else if (words[0] == "MODE")
 			{
-                std::cout << "makanaklch loz 2\n";
 				std::map<std::string, Channel>::iterator channelIt = channels.find(words[1]);
 				if (channelIt != channels.end()) 
 				{
