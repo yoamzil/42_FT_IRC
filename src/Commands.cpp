@@ -148,18 +148,23 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 {
                     std::map<int, Client*> clients = channel->getClients();
                     std::string nickName = words[3];
-                    std::map<int, Client*>::const_iterator it;
+                    std::map<int, Client*>::const_iterator iter;
                     int clientFd = 0;
-                    for (it = clients.begin(); it != clients.end(); ++it) 
+                    for (iter = clients.begin(); iter != clients.end(); ++iter) 
                     {
-                        if (it->second->username == nickName)
+                        std::cout << "teeeeest\n";
+                        std::string userName = iter->second->getNickname();
+                        std::cout << "username --> " << userName << std::endl;
+                        if (userName == nickName)
                         {
-                            clientFd = it->first;
+                            std::cout << "+++" << clientFd << std::endl;
+                            clientFd = iter->first;
                             break;
                         }
                     }
                     if (clientFd != 0)
                     {
+                        std::cout << "................. " << words[3].c_str() << std::endl;
                         channel->setOperator(clientFd, clients[clientFd]);
                         std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +o " + words[3].c_str() + "\r\n";
                         send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
@@ -172,7 +177,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 }
             }
         }
-        else if (!words[2].empty() && words[2][0] == '-')
+        else if (!words[2].empty() && words[2][0] == '-') ///////////////////////////////////////////////////////////////
         {
             std::string modes = words[2];
             for (int i = 1; modes[i] != '\0'; i++)
@@ -183,7 +188,10 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     for (iter = channel->modes.begin(); iter != channel->modes.end(); ++iter)
                     {
                         if (*iter == "k")
-                            iter = channel->modes.erase(iter);
+                        {
+                            channel->deleteMode("k");
+                            break;
+                        }
                     } 
                     channel->key.clear();
                     std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -k " + words[3].c_str() + "\r\n";
@@ -212,7 +220,10 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     for (iter = channel->modes.begin(); iter != channel->modes.end(); ++iter)
                     {
                         if (*iter == "l")
-                            iter = channel->modes.erase(iter);
+                        {
+                            channel->deleteMode("l");
+                            break;
+                        }
                     } 
                     channel->setLimit(0);
                     std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -l \r\n";
@@ -227,7 +238,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     int clientFd;
                     for (it = clients.begin(); it != clients.end(); ++it) 
                     {
-                        if (it->second->username == nickName)
+                        if (it->second->nickname == nickName)
                         {
                             clientFd = it->first;
                             break;
@@ -244,6 +255,8 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
     else
     {
         std::cout << "You have to be an Operator to proceed this operation 5" << std::endl;
+        std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+        send(isAdmin, message.c_str(), message.size(), 0);
         // return ;
     }
 }
