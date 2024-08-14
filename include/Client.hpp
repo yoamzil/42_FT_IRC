@@ -57,6 +57,7 @@ class Client
 		void		broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket);
 		void		authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		void 		handleMessage(Server* serverObj, int clientSocket, const std::string& message);
+		void 		LeaveSendList(Server *serverObj , __unused int clientSocket, const std::string& channelName);
 
 };
 

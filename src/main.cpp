@@ -15,5 +15,6 @@ int main(int argc, char* argv[])
 	Server*		serverObj = &ircServer;
     ircServer.start(serverObj);
 
+
     return (0);
 }

@@ -96,6 +96,11 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
         {
             std::cerr << "Failed to read from client" << std::endl;
         }
+		std::vector<std::string> channelNames = client[clientSocket]->getChannelName();
+		for (std::vector<std::string>::iterator it = channelNames.begin(); it != channelNames.end(); ++it)
+		{
+			client[clientSocket]->leaveChannel(serverObj, clientSocket, *it);
+		}
         removeClient(clientSocket);
         return ;
     }
@@ -165,12 +170,14 @@ void    Server::start(Server*	serverObj)
                 }
             }
         }
+		system("leaks ircserv");
     }
 }
 
 void    Server::removeClient(int clientSocket)
 {
     close(clientSocket);
+	delete client[clientSocket];
     client.erase(clientSocket);
     for (size_t i = 0; i < clientSockets.size(); i++)
     {
