@@ -5,10 +5,12 @@ SRCS		=	src/main.cpp \
 				src/Server.cpp \
 				src/Client.cpp \
 				src/Channel.cpp \
+				src/Commands.cpp \
 
 HFS			=	include/Server.hpp \
 				include/Client.hpp \
 				include/Channel.hpp \
+				include/Commands.hpp \
 				
 
 OBJS		=	$(SRCS:.cpp=.o)

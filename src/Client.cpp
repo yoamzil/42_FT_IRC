@@ -195,20 +195,139 @@ void Client::leaveChannel(Server *serverObj, int clientSocket, const std::string
 	}
 }
 
-void Client::joinChannel(Server *serverObj, int clientSocket, const std::string& channelName) {
-    if (serverObj->client.find(clientSocket) != serverObj->client.end()) {
+void Client::joinChannel(Server *serverObj, int clientSocket, const std::string& channelName, std::vector<std::string> words)
+{
+	bool joined = false;
+    if (serverObj->client.find(clientSocket) != serverObj->client.end()) 
+	{
         Client* clientObj = serverObj->client[clientSocket];
 
         // Check if the channel exists, if not, create it
-        if (serverObj->channels.find(channelName) == serverObj->channels.end()) {
+        if (serverObj->channels.find(channelName) == serverObj->channels.end())
+		{
+			std::cout << "channel creation\n";
             serverObj->channels[channelName] = Channel(channelName);
+            serverObj->channels[channelName].setOperator(clientSocket, clientObj);
+            serverObj->channels[channelName].setModes("n");
+			std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+			send(clientSocket, message.c_str(), message.size(), 0);
+			joined = true;
         }
-        serverObj->channels[channelName].addClient(clientObj);
+		else
+        {
+            std::cout << "----------Channel Modes--------\n";
+            std::vector<std::string> channel_modes = serverObj->channels[channelName].getModes();
+            std::vector<std::string>::iterator it_modes;
+            for (it_modes = channel_modes.begin(); it_modes != channel_modes.end(); ++it_modes)
+            {
+                std::cout << "***(" << it_modes->c_str() << ")***\n";
+            }
+            std::cout << "---------------------------\n";
+
+            if (serverObj->channels[channelName].getModes().size() == 0)
+            {
+            	// serverObj->channels[channelName].addClient(clientObj);
+				// clientObj->setChannelName(channelName);
+
+                //first part
+                std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+				send(clientSocket, message.c_str(), message.size(), 0);
+            
+                //Hamza code variable
+                joined = true;
+            }
+            else 
+            {
+                std::cout << "invite 2\n";
+                int modesCount = 1;
+                if (serverObj->channels[channelName].find_mode("k"))
+                {
+                    if (words[2] == serverObj->channels[channelName].key)
+                        modesCount++;
+                    else
+                        std::cout << "Incorrect password" << std::endl;
+                }
+                if (serverObj->channels[channelName].find_mode("i"))
+                {
+                    std::cout << "invite 1\n";
+                    std::map<int, Client*> inviteList = serverObj->channels[channelName].getInviteList();
+                    std::cout << "invite 0\n";
+                    std::map<int, Client*>::iterator it = inviteList.find(clientSocket);
+                    if (it != inviteList.end())
+                    {
+                        std::cout << "it +++" << it->first << std::endl;
+                        std::cout << "cS +++" << clientSocket << std::endl;
+                    }
+					std::cout << "invite 3\n";
+                    if (it != inviteList.end())
+                    {
+                        std::cout << "invite 4\n";
+                        modesCount++;
+                    }
+                    else
+                    {
+                        std::string message = ": 473 " + serverObj->client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
+                        send(clientSocket, message.c_str(), message.size(), 0);
+                        std::cout << "You Should be invited to join this channel!" << std::endl;
+                    }
+                }
+                if (serverObj->channels[channelName].find_mode("l"))
+                {
+                    int clientsCnt = serverObj->channels[channelName].clients.size();
+                    if (clientsCnt < serverObj->channels[channelName].getLimit())
+                        modesCount++;
+                    else
+                        std::cout << "Channel Full" << std::endl;
+                }
+                int modes = serverObj->channels[channelName].getModes().size();
+                // std::cout << "........." << modes << std::endl;
+                // std::vector<std::string> modat = serverObj->channels[channelName].getModes();
+                // std::cout << "......" << modat[0] << std::endl;
+                
+                if (modesCount == modes)
+                {
+                    std::cout << "modesCount --> " << modesCount << std::endl;
+                    std::cout << "modes --> " << modes << std::endl;
+                    std::cout << "---------------------------\n";
+                    std::vector<std::string> channel_modes = serverObj->channels[channelName].getModes();
+                    std::vector<std::string>::iterator it_modes;
+                    for (it_modes = channel_modes.begin(); it_modes != channel_modes.end(); ++it_modes)
+                    {
+                        std::cout << "***(" << it_modes->c_str() << ")***\n";
+                    }
+                    std::cout << "---------------------------\n";
+                    // serverObj->channels[channelName].addClient(clientObj);
+					// clientObj->setChannelName(channelName);
+
+                    //first part
+                   	std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+					send(clientSocket, message.c_str(), message.size(), 0);
+            
+                    //Hamza code variable
+                    joined = true;
+                }
+            }
+        }
+		serverObj->channels[channelName].addClient(clientObj);
 		clientObj->setChannelName(channelName);
-		std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
-		send(clientSocket, message.c_str(), message.size(), 0);
 	}
-	sendList(serverObj , clientSocket , channelName);
+	std::cout << "---------Operators--------\n";
+    std::map<int, Client*> admins = serverObj->channels[channelName].getOperators();
+    std::map<int, Client*>::iterator it_operator;
+    for (it_operator = admins.begin(); it_operator != admins.end(); ++it_operator)
+    {
+        std::cout << "***(" << it_operator->second->getNickname() << ")***\n";
+    }
+	if (joined)
+    	sendList(serverObj , clientSocket , channelName);
+    // std::cout << "---------------------------\n\n";
+	// std::cout << "---------Invite List--------\n";
+    // std::map<int, Client*> inviteList = serverObj->channels[channelName].getInviteList();
+    // std::map<int, Client*>::iterator it_invite;
+    // for (it_invite = inviteList.begin(); it_invite != inviteList.end(); ++it_invite)
+    // {
+    //     std::cout << "***(" << it_invite->second->getNickname() << ")***\n";
+    // }
 }
 
 
@@ -345,7 +464,7 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 
 				if (words[1][0] == '#')
 				{
-					clientObj->joinChannel(serverObj, clientSocket, words[1]);
+					clientObj->joinChannel(serverObj, clientSocket, words[1], words);
 				}
 				else if (words[1][0] != '#')
 				{
@@ -353,8 +472,97 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 					clientObj->sendMessage(clientSocket, message);
 				}
 			}
+			else if (words[0] == "KICK" && !words[1].empty() && clientObj->getStatus() == 1)
+			{
+                // std::cout << "entering kick \n";
+				std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+				if (channelIt != serverObj->channels.end()) 
+				{
+				    std::cout << "entering kick in if \n";
+					Channel* channelPtr = &(channelIt->second);
+					bool found = false;
+					std::map<int, Client*>::iterator it;
+					for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); it++)
+					{
+						if (it->second->nickname == words[2])
+						{
+							found = true;
+							break;
+						}
+					}
+					if (found)
+						kick(clientSocket, it->first, channelPtr);
+
+					else
+						std::cout << "No user found" << std::endl;
+				}
+			}
+			else if (words[0] == "MODE" && !words[1].empty() && clientObj->getStatus() == 1)
+			{
+				std::cout << "Entering mode\n";
+				std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+				if (channelIt != serverObj->channels.end()) 
+				{
+                    std::cout << "Entering mode\n";
+					Channel* channelPtr = &(channelIt->second);
+					mode(clientSocket, channelPtr,words);
+				}
+			}
+			else if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
+			{
+			    std::cout << "here 0\n";
+				std::cout << "--> " << words[2] << std::endl;
+                std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[2]);
+                if (channelIt != serverObj->channels.end()) 
+                {
+                    std::cout << "here 1\n";
+                    Channel* channelPtr = &(channelIt->second);
+                    bool found = false;
+                    std::map<int, Client*>::iterator it;
+                    for (it = serverObj->client.begin(); it != serverObj->client.end(); it++)
+                    {
+                        if (it->second->nickname == words[1])
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found)
+                    {
+                        std::cout << "here 2\n";
+                        invite(clientSocket, it->second, channelPtr);
+                    }
+                    else
+                        std::cout << "No user to invite" << std::endl;
+                }
+			}
+			else if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
+			{
+				std::cout << "Entering topic\n";
+			    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+                if (channelIt != serverObj->channels.end()) 
+                {
+                    Channel* channelPtr = &(channelIt->second);
+                    bool found = false;
+                    std::map<int, Client*>::iterator it;
+                    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); it++)
+                    {
+                        if (it->second->nickname == words[2])
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found)
+                        topic(it->first, words[2], channelPtr);
+                    else
+                        std::cout << "Cannot set the topic" << std::endl;
+                }
+				
+			}
 			else if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
+				std::cout << "Entering part\n";
 				if (words[1][0] == '#')
 				{
 					std::string message = ": remove\r\n";
@@ -365,8 +573,9 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 					std::string message = ": not remove\r\n";
 				}
 			}
-			else if(words[0] != "JOIN" && clientObj->getStatus() == 1)
+			else if(words[0] != "JOIN" && words[0] != "PART" && words[0] != "TOPIC" && words[0] != "INVITE" && words[0] != "MODE" && words[0] != "KICK" && clientObj->getStatus() == 1)
 			{
+				std::cout << "message : " << message << std::endl;
 				if (!message.find("PRIVMSG"))
 				{
 					clientObj->broadcastMessage(serverObj , words[1], message, clientSocket);

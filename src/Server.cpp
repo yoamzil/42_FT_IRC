@@ -170,7 +170,7 @@ void    Server::start(Server*	serverObj)
                 }
             }
         }
-		system("leaks ircserv");
+		// system("leaks ircserv");
     }
 }
 

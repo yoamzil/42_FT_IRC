@@ -12,21 +12,36 @@ class Channel
 	public:
 		std::string password;
 		std::string name;
+    	std::string key;
+		std::string topic;
+		std::vector<std::string> modes;
+		int limit;
     	std::map<int, Client*> clients;
+		std::map<int, Client*> operators;
+		std::map<int, Client*> inviteList;
 
 	public:
 		Channel();
 		Channel(const std::string& name);
-		// Channel & operator=(Channel const &src);
-		// Channel(Channel const &src);
-		void addClient(Client* client);
-		// std::string getChannelName();
-		void removeClient(Client* client);
-		// Client* getClient(int clientFd);
+		int	find_mode(std::string mode);
+		int getLimit();
+		std::string getName() ;
+		std::string getTopic();
+		std::string getKey();
+		std::vector<std::string> getModes();
+		std::map<int, Client*> getOperators();
 		std::map<int, Client*> getClients();
-		std::string getName();
+		std::map<int, Client*> getInviteList();
+		void setTopic(std::string newTopic);
+		void setModes(std::string newMode);
+		void deleteMode(std::string newMode);
+		void setKey(std::string newPassword);
+		void setLimit(int newLimit);
+		void setOperator(int clientSocket, Client* newOperator);
+		void addClient(Client* client);
+		void removeClient(Client* client);
+		void addToInviteList(Client* newMember);
 		~Channel();
-
 };
 
 
