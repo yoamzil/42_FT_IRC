@@ -1,7 +1,6 @@
 #include "../include/Channel.hpp"
-#include <iostream>
 
-Channel::Channel(std::string& name) : name(name) {}
+Channel::Channel(const std::string& name) : name(name) {}
 
 void Channel::addClient(Client* client) {
     clients[client->getFd()] = client;
@@ -25,24 +24,12 @@ std::map<int, Client*> Channel::getClients() {
 }
 
 
-// Channel::Channel(Channel const &src)
-// {
-// 	std::cout << "Channel : copy constructor called" << std::endl;
-// 	*this = src;
-// }
-// Channel & Channel::operator=(Channel const &src)
-// {
-// 	std::cout << "Channel : assignation operator called" << std::endl;
-// 	if (this != & src)
-// 	{
-// 		*this = src;
-// 	}
-//     return (*this);
-// }
+void Channel::removeClient(Client* client) {
+	clients.erase(client->getFd());
+}
 
 void Channel::setOperator(int clientSocket, Client* newOperator)
 {
-    std::cout << "3iiiw\n";
     operators.insert(std::make_pair(clientSocket, newOperator));
 }
 

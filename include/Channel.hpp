@@ -10,17 +10,19 @@ class Server;
 class Channel
 {
 	public:
+		std::string password;
 		std::string name;
-		std::string key;
+    	std::string key;
 		std::string topic;
 		std::vector<std::string> modes;
 		int limit;
     	std::map<int, Client*> clients;
 		std::map<int, Client*> operators;
 		std::map<int, Client*> inviteList;
+
 	public:
 		Channel();
-		Channel(std::string& name);
+		Channel(const std::string& name);
 		int	find_mode(std::string mode);
 		int getLimit();
 		std::string getName() ;
@@ -37,6 +39,7 @@ class Channel
 		void setLimit(int newLimit);
 		void setOperator(int clientSocket, Client* newOperator);
 		void addClient(Client* client);
+		void removeClient(Client* client);
 		void addToInviteList(Client* newMember);
 		~Channel();
 };

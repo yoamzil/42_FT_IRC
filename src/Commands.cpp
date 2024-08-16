@@ -6,16 +6,34 @@ Commands::Commands() {
     std::cout << "Default commands constructor called";
 }
 
-void Commands::kick(int isAdmin, int toKick, Channel* channel) {
-    std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-    if (it != channel->operators.end())
+void Commands::kick(Server* serverObj, int isAdmin, int toKick, Channel* channel)
+{
+    std::cout << "kick called \n";
+    std::string channelName = channel->getName();
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(channelName);
+    if (channelIt != serverObj->channels.end())
     {
-        channel->clients.erase(toKick);
-        // :haarab!hamza@88ABE6.25BF1D.D03F86.88C9BD.IP KICK #1 rouali :haarab
-        // :<admin_nick>!<admin_user>@<admin_host> KICK <channel> <kicked_nick> :<reason>
-        // std::string message = ":" + channel->clients[isAdmin]->getNickname() + "!" + channel->clients[isAdmin]->getUsername() + "@localhost KICK " + channel->getName() + " " + channel->clients[toKick]->getNickname() + " :" + channel->clients[isAdmin]->getNickname() + " \r\n";
-        // send(isAdmin, message.c_str(), message.size(), 0);
-        // std::cout << "Bug removed succefully" << std::endl;
+        std::cout << "kick called channel found\n";
+        std::map<int, Client*>::iterator adminIt = channel->operators.find(isAdmin);
+        if (adminIt != channel->operators.end())
+        {
+            std::cout << "kick called channel found admin true\n";
+            channel->clients.erase(toKick);
+            std::string channelName = channel->getName();
+            serverObj->client[toKick]->eraseClientChannel(channelName);
+
+            // >> :rouali!reda@88ABE6.25BF1D.D03F86.88C9BD.IP KICK #1 mamma :roual
+            
+            std::map<int, Client*> members = channel->getClients();
+            for (std::map<int, Client*>::iterator it = members.begin(); it != members.end(); ++it) 
+            {
+                std::cout << "kick called channel found admin true in for\n";
+                std::string message = ":" + channel->operators[isAdmin]->getNickname() + "!" + channel->operators[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKick]->getNickname() + " :" + channel->operators[isAdmin]->getNickname() + "\r\n";
+                send(it->first, message.c_str(), message.size(), 0);
+            }
+            std::string message = ":" + channel->operators[isAdmin]->getNickname() + "!" + channel->operators[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKick]->getNickname() + " :" + channel->operators[isAdmin]->getNickname() + "\r\n";
+            send(toKick, message.c_str(), message.size(), 0);
+        }
     }
     else
     {
@@ -38,11 +56,6 @@ void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
         {
             channel->addToInviteList(newMember);
             std::string message;
-            // message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
-	        // send(isAdmin, message.c_str(), message.size(), 0);
-            // message = ":" + channel->clients[isAdmin]->getNickname() + "!" + channel->clients[isAdmin]->getUsername() + "@localhost INVITE " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
-            // send(isAdmin, message.c_str(), message.size(), 0);
-            // :irc.example.com 341 john alice #examplechannel
             message = ": 341 " + channel->clients[isAdmin]->getNickname() + " " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
             send(isAdmin, message.c_str(), message.size(), 0);
         }
@@ -262,5 +275,5 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
 }
 
 Commands::~Commands() {
-    std::cout << "Default commands Destructor called";
+    std::cout << "Default commands Destructor called" << std::endl;
 }

@@ -2,7 +2,11 @@
 #define SERVER_HPP
 
 #include <sstream>      // std::istringstream
-#include <string>
+// #include <string>
+// #include <stdlib.h>
+// #include <cerrno>
+// #include <errno.h>
+// #include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <sys/socket.h>
@@ -11,44 +15,52 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <map>
-#include <cstdlib>
-#include <cstdio>
 
-#ifndef __unused
-#define __unused
-#endif
-
-// #include "../include/Client.hpp"
-#include "../include/Commands.hpp"
-#include "../include/Channel.hpp"
 #include "../include/Client.hpp"
+#include "../include/Channel.hpp"
 
-class Server : public Commands
+class Client;
+
+class Channel;
+
+class Server
 {
     public:
-        int                            port;
-        std::string                    password;
-        int                            serverSocket;
-        std::vector<pollfd>            clientSockets;
-        std::map<int, std::string>     clients;
-		std::map<int, Client *>        client;
-		std::map<std::string, Channel> channels;
-		int status;
+        int                         port;
+        std::string                 password;
 
-        void        handleClient(int clientSocket);
+
+        int                         serverSocket;
+        std::vector<pollfd>         clientSockets;
+        // std::map<int, std::string>  clients;
+		std::map <int, Client *> client;
+		std::map<std::string, Channel> channels;
+
+        // std::map<int, std::string>  nicknames;
+        // std::map<std::string, std::vector<int> > channels;
+
+
+        void        handleClient(Server* serverObj, int clientSocket);
         void        acceptClient();
         void        removeClient(int clientSocket);
         void        setNonBlocking(int socket);
     public:
+		Server();
+		~Server();
+		Server(Server const &src);
+		Server & operator=(Server const &src);
+		std::string	getPassword();
+		// void 		sendList(Server *serverObj , int clientSocket, const std::string& channelName);
         Server(int port, const std::string& password);
-        void        handleMessage(__unused int clientSocket, const std::string& message);
-		void        joinChannel(int clientSocket, __unused std::string& channelName, std::vector<std::string> words);
-		void		leaveChannel(int clientSocket, const std::string& channel);
-		void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
-		void		authentication(Client* clientObj, __unused int clientSocket, std::vector<std::string> & words);
+		// void 		handleMessage(int clientSocket, const std::string& message);
+		// void		joinChannel(int clientSocket, const std::string& channel);
+		// void		leaveChannel(int clientSocket, const std::string& channel);
+		// void		broadcastMessage(const std::string& channelName, const std::string& message, int clientSocket);
+		// void		authentication(Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		// void		Message(int clientSocket, const std::string& message);
-        void start();
-		void sendMessage(int clientSocket, const std::string& message);
+        void start(Server*	serverObj);
+		
+		Channel* findChannelByName(const std::string& channelName);
 
 };
 
