@@ -512,57 +512,9 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 				}
 			}
 			else if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
-			    std::cout << "here 0\n";
-				std::cout << "--> " << words[2] << std::endl;
-                std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[2]);
-                if (channelIt != serverObj->channels.end()) 
-                {
-                    std::cout << "here 1\n";
-                    Channel* channelPtr = &(channelIt->second);
-                    bool found = false;
-                    std::map<int, Client*>::iterator it;
-                    for (it = serverObj->client.begin(); it != serverObj->client.end(); it++)
-                    {
-                        if (it->second->nickname == words[1])
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found)
-                    {
-                        std::cout << "here 2\n";
-                        invite(clientSocket, it->second, channelPtr);
-                    }
-                    else
-                        std::cout << "No user to invite" << std::endl;
-                }
-			}
+                invite(serverObj, clientSocket, words);
 			else if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
-				std::cout << "Entering topic\n";
-			    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
-                if (channelIt != serverObj->channels.end()) 
-                {
-                    Channel* channelPtr = &(channelIt->second);
-                    bool found = false;
-                    std::map<int, Client*>::iterator it;
-                    for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); it++)
-                    {
-                        if (it->second->nickname == words[2])
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found)
-                        topic(it->first, words[2], channelPtr);
-                    else
-                        std::cout << "Cannot set the topic" << std::endl;
-                }
-				
-			}
+			    topic(serverObj, clientSocket, words);
 			else if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
 			{
 				std::cout << "Entering part\n";

@@ -45,64 +45,106 @@ void Commands::kick(Server* serverObj, int isAdmin, int toKick, Channel* channel
     }
 }
 
-void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
+void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    std::cout << "here 3\n";
-    if (channel->find_mode("i"))
+    std::cout << "In invite\n";
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[2]);
+    if (channelIt != serverObj->channels.end()) 
     {
-        std::cout << "here 4\n";
-        std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-        if (it != channel->operators.end())
+        std::cout << "In invite In channelIt\n";
+        bool found = false;
+        std::map<int, Client*>::iterator newMemberIt;
+        for (newMemberIt = serverObj->client.begin(); newMemberIt != serverObj->client.end(); newMemberIt++)
         {
-            channel->addToInviteList(newMember);
-            std::string message;
-            message = ": 341 " + channel->clients[isAdmin]->getNickname() + " " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
-            send(isAdmin, message.c_str(), message.size(), 0);
+            if (newMemberIt->second->nickname == words[1])
+            {
+                found = true;
+                break;
+            }
+        }
+        if (found)
+        {
+            std::cout << "In invite In channelIt In found\n";
+            if (channelIt->second.find_mode("i"))
+            {
+                std::cout << "In invite In channelIt In found In mode i\n";
+                std::map<int, Client*>::iterator it = channelIt->second.operators.find(isAdmin);
+                if (it != channelIt->second.operators.end())
+                {
+                    std::cout << "In invite In channelIt In found In mode i in is operator\n";
+                    channelIt->second.addToInviteList(newMemberIt->second);
+                    std::string message;
+                    message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
+                    send(isAdmin, message.c_str(), message.size(), 0);
+                }
+                else
+                {
+                    std::cout << "In invite In channelIt In found In mode i in is not operator\n";
+                    std::string message = ": 482 " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + " :You're not channel operator\r\n";
+           	        send(isAdmin, message.c_str(), message.size(), 0);
+                }
+            }
+            else 
+            {
+                std::cout << "In invite In channelIt In found no mode I\n";
+                channelIt->second.addToInviteList(newMemberIt->second);
+                std::string message = ":" + newMemberIt->second->getNickname() + "!" + newMemberIt->second->getUsername() + "@localhost MODE " + channelIt->second.getName() + " +i \r\n";
+           	    send(isAdmin, message.c_str(), message.size(), 0);
+                std::cout << "User added to invite list" << std::endl;
+            }
         }
         else
         {
-            std::string message = ": 482 " + newMember->getNickname() + " " + channel->getName() + " :You're not channel operator\r\n";
-	        send(isAdmin, message.c_str(), message.size(), 0);
+            std::cout << "In invite In channelIt No user\n";
+            // :luna.AfterNET.Org 401 aaa #1 :No such nick
+            std::string message = ": " + words[1] + " " + channelIt->second.getName() + " :No such nick\r\n";
+       	    send(isAdmin, message.c_str(), message.size(), 0);
         }
-    }
-    else 
-    {
-        std::cout << "here 5\n";
-        channel->addToInviteList(newMember);
-        std::string message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
-	    send(isAdmin, message.c_str(), message.size(), 0);
-        std::cout << "User added to invite list" << std::endl;
     }
 }
 
-void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
+void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    if (newTopic != "")
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+    if (channelIt != serverObj->channels.end()) 
     {
-        if (channel->find_mode("t"))
+        if (words.size() == 2)
         {
-            std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-            if (it != channel->operators.end())
+            std::string topic = channelIt->second.getTopic();
+            if (topic.empty())
             {
-                channel->setTopic(newTopic);
-                std::cout << "Topic changed successfully list" << std::endl;
+                std::string message = ": 331 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :No topic is set.\r\n";
+     	        send(isAdmin, message.c_str(), message.size(), 0);
             }
             else
             {
-                std::cout << "You have to be an Operator to proceed this operation" << std::endl;
-                return ;
+                std::string message = ": 332 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :" + topic + "\r\n";
+    	        send(isAdmin, message.c_str(), message.size(), 0);
+            }
+        }
+        else if (channelIt->second.find_mode("t"))
+        {
+            std::map<int, Client*>::iterator it = channelIt->second.operators.find(isAdmin);
+            if (it != channelIt->second.operators.end())
+            {
+                std::string newTopic = words[2].substr(1); 
+                channelIt->second.setTopic(newTopic);
+                std::string message = ":" + serverObj->client[isAdmin]->getNickname() + "!" + serverObj->client[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+       	        send(isAdmin, message.c_str(), message.size(), 0);
+            }
+            else
+            {
+                std::string message = ": 482 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
+                send(isAdmin, message.c_str(), message.size(), 0);
             }
         }
         else 
         {
-            channel->setTopic(newTopic);
-            std::cout << "Topic changed successfully list" << std::endl;
+            std::string newTopic = words[2].substr(1); 
+            channelIt->second.setTopic(newTopic);
+            std::string message = ":" + serverObj->client[isAdmin]->getNickname() + "!" + serverObj->client[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+   	        send(isAdmin, message.c_str(), message.size(), 0);
         }
-    }
-    else
-    {
-        // Just view the topic
-        std::cout << channel->getTopic() << std::endl;
     }
 }
 
@@ -140,6 +182,15 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                     std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +k " + words[3].c_str() + "\r\n";
                     send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                     std::cout << "Channel password set to " << channel->key << std::endl;
+                }
+                else if (modes[i] == 't')
+                {
+                    std::cout << "In mode function in topic condition \n";
+                    channel->modes.push_back("t");
+                    std::cout << "Channel is now topic only " << std::endl;
+
+                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +t\r\n";
+                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                 }
                 else if (modes[i] == 'i')
                 {
@@ -182,11 +233,6 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                         std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +o " + words[3].c_str() + "\r\n";
                         send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                     }
-                    // else
-                    // {
-
-                    //     std::cout << "New operator added --> " << clients[clientFd]->nickname << std::endl;
-                    // }
                 }
             }
         }
