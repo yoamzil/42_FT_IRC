@@ -242,7 +242,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                 int modesCount = 1;
                 if (serverObj->channels[channelName].find_mode("k"))
                 {
-                    if (words[2] == serverObj->channels[channelName].key)
+                    if (words[2] == serverObj->channels[channelName].getKey())
                         modesCount++;
                     else
                         std::cout << "Incorrect password" << std::endl;
@@ -273,7 +273,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                 }
                 if (serverObj->channels[channelName].find_mode("l"))
                 {
-                    int clientsCnt = serverObj->channels[channelName].clients.size();
+                    int clientsCnt = serverObj->channels[channelName].getClients().size();
                     if (clientsCnt < serverObj->channels[channelName].getLimit())
                         modesCount++;
                     else
@@ -482,7 +482,7 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 					Channel* channelPtr = &(channelIt->second);
 					bool found = false;
 					std::map<int, Client*>::iterator it;
-					for (it = channelPtr->clients.begin(); it != channelPtr->clients.end(); it++)
+					for (it = channelPtr->getClients().begin(); it != channelPtr->getClients().end(); it++)
 					{
 						if (it->second->nickname == words[2])
 						{

@@ -8,26 +8,19 @@ Commands::Commands() {
 
 void Commands::kick(Server* serverObj, int isAdmin, int toKick, Channel* channel)
 {
-    std::cout << "kick called \n";
     std::string channelName = channel->getName();
     std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(channelName);
     if (channelIt != serverObj->channels.end())
     {
-        std::cout << "kick called channel found\n";
         std::map<int, Client*>::iterator adminIt = channel->operators.find(isAdmin);
         if (adminIt != channel->operators.end())
         {
-            std::cout << "kick called channel found admin true\n";
             channel->clients.erase(toKick);
             std::string channelName = channel->getName();
             serverObj->client[toKick]->eraseClientChannel(channelName);
-
-            // >> :rouali!reda@88ABE6.25BF1D.D03F86.88C9BD.IP KICK #1 mamma :roual
-            
             std::map<int, Client*> members = channel->getClients();
             for (std::map<int, Client*>::iterator it = members.begin(); it != members.end(); ++it) 
             {
-                std::cout << "kick called channel found admin true in for\n";
                 std::string message = ":" + channel->operators[isAdmin]->getNickname() + "!" + channel->operators[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKick]->getNickname() + " :" + channel->operators[isAdmin]->getNickname() + "\r\n";
                 send(it->first, message.c_str(), message.size(), 0);
             }
@@ -39,19 +32,15 @@ void Commands::kick(Server* serverObj, int isAdmin, int toKick, Channel* channel
     {
         std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
         send(isAdmin, message.c_str(), message.size(), 0);
-        // :luna.AfterNET.Org 482 rouali #1 :You're not channel operator
-        // std::cout << "You have to be an Operator to proceed this operation" << std::endl;
         return ;
     }
 }
 
 void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    std::cout << "In invite\n";
     std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[2]);
     if (channelIt != serverObj->channels.end()) 
     {
-        std::cout << "In invite In channelIt\n";
         bool found = false;
         std::map<int, Client*>::iterator newMemberIt;
         for (newMemberIt = serverObj->client.begin(); newMemberIt != serverObj->client.end(); newMemberIt++)
@@ -64,39 +53,34 @@ void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> w
         }
         if (found)
         {
-            std::cout << "In invite In channelIt In found\n";
             if (channelIt->second.find_mode("i"))
             {
-                std::cout << "In invite In channelIt In found In mode i\n";
                 std::map<int, Client*>::iterator it = channelIt->second.operators.find(isAdmin);
                 if (it != channelIt->second.operators.end())
                 {
-                    std::cout << "In invite In channelIt In found In mode i in is operator\n";
                     channelIt->second.addToInviteList(newMemberIt->second);
-                    std::string message;
-                    message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
+                    std::string message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
                     send(isAdmin, message.c_str(), message.size(), 0);
+                    message = ":" + channelIt->second.clients[isAdmin]->getNickname() + "!" + channelIt->second.clients[isAdmin]->getUsername() + "@" + newMemberIt->second->getLocation() + " INVITE " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + "\r\n";
+                    send(newMemberIt->second->getFd(), message.c_str(), message.size(), 0);
                 }
                 else
                 {
-                    std::cout << "In invite In channelIt In found In mode i in is not operator\n";
                     std::string message = ": 482 " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + " :You're not channel operator\r\n";
            	        send(isAdmin, message.c_str(), message.size(), 0);
                 }
             }
             else 
             {
-                std::cout << "In invite In channelIt In found no mode I\n";
                 channelIt->second.addToInviteList(newMemberIt->second);
-                std::string message = ":" + newMemberIt->second->getNickname() + "!" + newMemberIt->second->getUsername() + "@localhost MODE " + channelIt->second.getName() + " +i \r\n";
-           	    send(isAdmin, message.c_str(), message.size(), 0);
-                std::cout << "User added to invite list" << std::endl;
+                std::string message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
+                send(isAdmin, message.c_str(), message.size(), 0);
+                message = ":" + channelIt->second.clients[isAdmin]->getNickname() + "!" + channelIt->second.clients[isAdmin]->getUsername() + "@" + newMemberIt->second->getLocation() + " INVITE " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + "\r\n";
+                send(newMemberIt->second->getFd(), message.c_str(), message.size(), 0);
             }
         }
         else
         {
-            std::cout << "In invite In channelIt No user\n";
-            // :luna.AfterNET.Org 401 aaa #1 :No such nick
             std::string message = ": " + words[1] + " " + channelIt->second.getName() + " :No such nick\r\n";
        	    send(isAdmin, message.c_str(), message.size(), 0);
         }
