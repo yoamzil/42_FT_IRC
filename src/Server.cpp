@@ -96,10 +96,10 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
         {
             std::cerr << "Failed to read from client" << std::endl;
         }
-		std::vector<std::string> channelNames = client[clientSocket]->getChannelName();
+		std::vector<std::string> channelNames = mapClient[clientSocket]->getChannelName();
 		for (std::vector<std::string>::iterator it = channelNames.begin(); it != channelNames.end(); ++it)
 		{
-			client[clientSocket]->leaveChannel(serverObj, clientSocket, *it);
+			mapClient[clientSocket]->leaveChannel(serverObj, clientSocket, *it);
 		}
         removeClient(clientSocket);
         return ;
@@ -132,11 +132,9 @@ void    Server::acceptClient()
 	clientSockets.push_back(clientPollFd);
 	// clients[clientSocket] = "";
 
-	
-
 	Client* newClient = new Client();
     newClient->setFd(clientSocket);
-    client[clientSocket] = newClient;
+    mapClient[clientSocket] = newClient;
 	// Channel* newChannel = new Channel();
 
 	std::cout << "New client connected " << clientSocket << std::endl;
@@ -147,6 +145,7 @@ void    Server::start(Server*	serverObj)
 	
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
 	// Client client;
+	
     while (true)
     {
         int pollCount = poll(clientSockets.data(), clientSockets.size(), -1);
@@ -170,15 +169,15 @@ void    Server::start(Server*	serverObj)
                 }
             }
         }
-		// system("leaks ircserv");
+		// system("leaks ircserv");mak
     }
 }
 
 void    Server::removeClient(int clientSocket)
 {
     close(clientSocket);
-	delete client[clientSocket];
-    client.erase(clientSocket);
+	delete mapClient[clientSocket];
+    mapClient.erase(clientSocket);
     for (size_t i = 0; i < clientSockets.size(); i++)
     {
         if (clientSockets[i].fd == clientSocket)
@@ -188,4 +187,19 @@ void    Server::removeClient(int clientSocket)
         }
     }
     std::cout << "Client disconnected " << clientSocket << std::endl;
+}
+
+
+std::map <int , Client *> Server::getClient()
+{
+	return (this->mapClient);
+}
+
+std::map<std::string, Channel> Server::getChannels()
+{
+	return (channels);
+}
+
+void Server::setChannels(const std::map<std::string, Channel>& newChannels) {
+    channels = newChannels;
 }

@@ -16,8 +16,8 @@
 #include <poll.h>
 #include <map>
 
-#include "../include/Client.hpp"
-#include "../include/Channel.hpp"
+#include "./client_channel/Client.hpp"
+#include "./client_channel/Channel.hpp"
 
 class Client;
 
@@ -25,26 +25,23 @@ class Channel;
 
 class Server
 {
-    public:
+    private :
         int                         port;
         std::string                 password;
 
-
         int                         serverSocket;
         std::vector<pollfd>         clientSockets;
-        // std::map<int, std::string>  clients;
-		std::map <int, Client *> client;
+		std::map <int, Client *> 	mapClient;
 		std::map<std::string, Channel> channels;
 
-        // std::map<int, std::string>  nicknames;
-        // std::map<std::string, std::vector<int> > channels;
-
-
+    public:
+		std::map <int, Client *> getClient();
+		void	setChannels(const std::map<std::string, Channel>& newChannels);
+		std::map<std::string, Channel> getChannels();
         void        handleClient(Server* serverObj, int clientSocket);
         void        acceptClient();
         void        removeClient(int clientSocket);
         void        setNonBlocking(int socket);
-    public:
 		Server();
 		~Server();
 		Server(Server const &src);
@@ -59,7 +56,6 @@ class Server
 		// void		authentication(Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		// void		Message(int clientSocket, const std::string& message);
         void start(Server*	serverObj);
-		
 		Channel* findChannelByName(const std::string& channelName);
 
 };

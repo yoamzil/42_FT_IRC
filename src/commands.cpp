@@ -1,6 +1,6 @@
 #include "../include/Commands.hpp"
-#include "../include/Channel.hpp"
-#include "../include/Client.hpp"
+#include "../include/client_channel/Channel.hpp"
+#include "../include/client_channel/Client.hpp"
 
 Commands::Commands() {
     std::cout << "Default commands constructor called";

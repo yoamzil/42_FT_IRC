@@ -1,12 +1,15 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "../include/Commands.hpp"
-#include "../include/Channel.hpp"
-#include "../include/Client.hpp"
+#include "../Commands.hpp"
+#include "Channel.hpp"
+#include "Authentications.hpp"
+#include "ModeUser.hpp"
 
 class Server;
 class Channel;
+class Authentications;
+class ModeUser;
 
 class Client : public Commands
 {
@@ -22,8 +25,10 @@ class Client : public Commands
 		bool		correctPassword;
 		bool		status;
 
+		// std::map<std::string, Channel> channels;
     public:
 		Client();
+		// std::map<std::string, Channel> getChannels();
 		// Client(Client const &src);
 		// Client & operator=(Client const &src);
 
@@ -52,11 +57,11 @@ class Client : public Commands
 		void 		start();
 		void 		setLocation(const std::string& Location);
 		void 		sendMessage(int clientSocket, const std::string& message);
-		void 		sendList(Server *serverObj , int clientSocket, const std::string& channelName);
+		void 		sendList(Server *serverObj , const std::string& channelName);
 		void 		joinChannel(Server *serverObj, int clientSocket, const std::string& channelName, std::vector<std::string> words);
 		void		leaveChannel(Server *serverObj, int clientSocket, const std::string& channel);
 		void		broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket);
-		void		authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
+		// void		authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		void 		handleMessage(Server* serverObj, int clientSocket, const std::string& message);
 		void 		LeaveSendList(Server *serverObj , __unused int clientSocket, const std::string& channelName);
 
