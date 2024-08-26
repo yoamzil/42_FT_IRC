@@ -17,7 +17,6 @@ class Client : public Commands
 		std::string username;
 		std::string nickname;
 		std::string pass;
-		// std::string _channelName;
 		std::vector<std::string>  _channelNames;
 		bool		correctPassword;
 		bool		status;

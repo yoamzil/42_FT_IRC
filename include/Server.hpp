@@ -33,6 +33,13 @@ class Server
 		std::map <int, Client *> client;
 		std::map<std::string, Channel> channels;
     public:
+        // void addChannel(Channel channelName);
+        // void removeChannel(Channel channelName);
+        
+        std::map<int, Client *>           getClient();
+		std::map<std::string, Channel>    getChannels();
+		std::string                       getPassword();
+		
         void        handleClient(Server* serverObj, int clientSocket);
         void        acceptClient();
         void        removeClient(int clientSocket);
@@ -41,7 +48,6 @@ class Server
 		~Server();
 		Server(Server const &src);
 		Server & operator=(Server const &src);
-		std::string	getPassword();
         Server(int port, const std::string& password);
         void start(Server*	serverObj);
 		Channel* findChannelByName(const std::string& channelName);
