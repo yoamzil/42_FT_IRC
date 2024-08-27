@@ -206,11 +206,15 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
         if (serverObj->channels.find(channelName) == serverObj->channels.end())
 		{
 			std::cout << "channel creation\n";
+			
             serverObj->channels[channelName] = Channel(channelName);
             serverObj->channels[channelName].setOperator(clientSocket, clientObj);
             serverObj->channels[channelName].setModes("n");
 			std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
 			send(clientSocket, message.c_str(), message.size(), 0);
+			
+			serverObj->channels[channelName].addClient(clientObj);
+			clientObj->setChannelName(channelName);
 			joined = true;
         }
 		else
@@ -274,9 +278,16 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                 if (serverObj->channels[channelName].find_mode("l"))
                 {
                     int clientsCnt = serverObj->channels[channelName].getClients().size();
+                    std::cout << "number of clients --> " << clientsCnt << std::endl;
+                    std::cout << "channel limit --> " << serverObj->channels[channelName].getLimit() << std::endl;
                     if (clientsCnt < serverObj->channels[channelName].getLimit())
                         modesCount++;
                     else
+                    {
+                        // :Aurora.AfterNET.Org 471 iii #1 :Cannot join channel (+l)
+                        std::string message = ": 471 " + serverObj->client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
+                        send(clientSocket, message.c_str(), message.size(), 0);
+                    }
                         std::cout << "Channel Full" << std::endl;
                 }
                 int modes = serverObj->channels[channelName].getModes().size();
@@ -302,14 +313,16 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                     //first part
                    	std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
 					send(clientSocket, message.c_str(), message.size(), 0);
-            
+					
+					// serverObj->channels[channelName].addClient(clientObj);
+					// clientObj->setChannelName(channelName);
                     //Hamza code variable
+                    serverObj->channels[channelName].addClient(clientObj);
+                    clientObj->setChannelName(channelName);
                     joined = true;
                 }
             }
         }
-		serverObj->channels[channelName].addClient(clientObj);
-		clientObj->setChannelName(channelName);
 	}
 	std::cout << "---------Operators--------\n";
     std::map<int, Client*> admins = serverObj->channels[channelName].getOperators();
@@ -318,8 +331,20 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
     {
         std::cout << "***(" << it_operator->second->getNickname() << ")***\n";
     }
-	if (joined)
-    	sendList(serverObj , clientSocket , channelName);
+   	if (joined)
+   	{
+       	sendList(serverObj , clientSocket , channelName);
+        if (serverObj->channels[channelName].getClients().size() > 1)
+        {
+            std::map<int, Client*> members = serverObj->channels[channelName].getClients();
+            for (std::map<int, Client*>::iterator it = members.begin(); it != members.end(); ++it) 
+            {
+                // :nickname!user@host JOIN #channelname
+                std::string message = ":" + members[clientSocket]->getNickname() + "!" + members[clientSocket]->getUsername() + "@" + members[clientSocket]->getLocation() + " JOIN " + channelName + "\r\n";
+                send(it->first, message.c_str(), message.size(), 0);
+            }
+        }
+   	}
     // std::cout << "---------------------------\n\n";
 	// std::cout << "---------Invite List--------\n";
     // std::map<int, Client*> inviteList = serverObj->channels[channelName].getInviteList();
@@ -478,24 +503,29 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 				std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
 				if (channelIt != serverObj->channels.end()) 
 				{
-				    std::cout << "entering kick in if \n";
-					Channel* channelPtr = &(channelIt->second);
+					// Channel* channelPtr = &(channelIt->second);
+					std::map<std::string, Channel> channels = serverObj->channels;
 					bool found = false;
+					std::map<int, Client*> channelClients = channels[words[1]].getClients();
 					std::map<int, Client*>::iterator it;
-					for (it = channelPtr->getClients().begin(); it != channelPtr->getClients().end(); it++)
+					for (it = channelClients.begin(); it != channelClients.end(); it++)
 					{
-						if (it->second->nickname == words[2])
+	                    std::cout << it->second->getNickname() << std::endl;
+						std::cout << words.size() << std::endl;
+					    std::cout << "-->" + words[2] << std::endl;
+						if (it->second->getNickname() == words[2])
 						{
+		                    std::cout << "entering kick in if \n";
 							found = true;
 							break;
 						}
+						std::cout << "........\n";
 					}
 					if (found)
 					{
 					    std::cout << "kick in found \n";
-						kick(serverObj, clientSocket, it->first, channelPtr);
+						kick(serverObj, clientSocket, it->first, &channels[words[1]]);
 					}
-
 					else
 						std::cout << "No user found" << std::endl;
 				}

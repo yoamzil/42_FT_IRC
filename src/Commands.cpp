@@ -27,13 +27,19 @@ void Commands::kick(Server* serverObj, int isAdmin, int toKick, Channel* channel
             std::string message = ":" + channel->operators[isAdmin]->getNickname() + "!" + channel->operators[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKick]->getNickname() + " :" + channel->operators[isAdmin]->getNickname() + "\r\n";
             send(toKick, message.c_str(), message.size(), 0);
         }
+        else
+        {
+            std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+            send(isAdmin, message.c_str(), message.size(), 0);
+            return ;
+        }
     }
-    else
-    {
-        std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
-        send(isAdmin, message.c_str(), message.size(), 0);
-        return ;
-    }
+    // else
+    // {
+    //     std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+    //     send(isAdmin, message.c_str(), message.size(), 0);
+    //     return ;
+    // }
 }
 
 void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> words)
@@ -188,6 +194,7 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
                 else if (modes[i] == 'l')
                 {
                     channel->limit = atoi(words[3].c_str());
+                    channel->modes.push_back("l");
                     std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +l " + words[3].c_str() + "\r\n";
                     send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
                     std::cout << "Channel limit is set to " << channel->limit << std::endl;
@@ -297,9 +304,12 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
     }
     else
     {
-        std::cout << "You have to be an Operator to proceed this operation 5" << std::endl;
-        std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
-        send(isAdmin, message.c_str(), message.size(), 0);
+        if (words.size() != 2)
+        {
+            std::cout << "You have to be an Operator to proceed this operation 5" << std::endl;
+            std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+            send(isAdmin, message.c_str(), message.size(), 0);
+        }
         // return ;
     }
 }
