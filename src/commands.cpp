@@ -3,264 +3,356 @@
 #include "../include/client_channel/Client.hpp"
 
 Commands::Commands() {
-    // std::cout << "Default commands constructor called";
 }
 
-void Commands::kick(int isAdmin, int toKick, Channel* channel) {
-    std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-    if (it != channel->operators.end())
-    {
-        channel->clients.erase(toKick);
-        // :haarab!hamza@88ABE6.25BF1D.D03F86.88C9BD.IP KICK #1 rouali :haarab
-        // :<admin_nick>!<admin_user>@<admin_host> KICK <channel> <kicked_nick> :<reason>
-        // std::string message = ":" + channel->clients[isAdmin]->getNickname() + "!" + channel->clients[isAdmin]->getUsername() + "@localhost KICK " + channel->getName() + " " + channel->clients[toKick]->getNickname() + " :" + channel->clients[isAdmin]->getNickname() + " \r\n";
-        // send(isAdmin, message.c_str(), message.size(), 0);
-        // std::cout << "Bug removed succefully" << std::endl;
-    }
-    else
-    {
-        std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
-        send(isAdmin, message.c_str(), message.size(), 0);
-        // :luna.AfterNET.Org 482 rouali #1 :You're not channel operator
-        // std::cout << "You have to be an Operator to proceed this operation" << std::endl;
-        return ;
-    }
-}
-
-void Commands::invite(int isAdmin, Client* newMember, Channel* channel)
+void Commands::kick(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    std::cout << "here 3\n";
-    if (channel->find_mode("i"))
-    {
-        std::cout << "here 4\n";
-        std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-        if (it != channel->operators.end())
-        {
-            channel->addToInviteList(newMember);
-            std::string message;
-            // message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
-	        // send(isAdmin, message.c_str(), message.size(), 0);
-            // message = ":" + channel->clients[isAdmin]->getNickname() + "!" + channel->clients[isAdmin]->getUsername() + "@localhost INVITE " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
-            // send(isAdmin, message.c_str(), message.size(), 0);
-            // :irc.example.com 341 john alice #examplechannel
-            message = ": 341 " + channel->clients[isAdmin]->getNickname() + " " + newMember->getNickname() + " :" + channel->getName() + " \r\n";
-            send(isAdmin, message.c_str(), message.size(), 0);
+        std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+    	if (channelIt != serverObj->channels.end()) 
+    	{
+    	std::map<std::string, Channel> channels = serverObj->channels;
+    	bool found = false;
+    	std::map<int, Client*> channelClients = channels[words[1]].getClients();
+    	std::map<int, Client*>::iterator toKickIt;
+    	for (toKickIt = channelClients.begin(); toKickIt != channelClients.end(); toKickIt++)
+    	{
+                    std::cout << toKickIt->second->getNickname() << std::endl;
+    		std::cout << words.size() << std::endl;
+    	    std::cout << "-->" + words[2] << std::endl;
+    		if (toKickIt->second->getNickname() == words[2])
+    		{
+                    std::cout << "entering kick in if \n";
+    			found = true;
+    			break;
+    		}
+    	}
+    	if (found)
+    	{
+    	    std::cout << "kick in found \n";
+            std::string channelName = serverObj->channels[words[1]].getName();
+            std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(channelName);
+            if (channelIt != serverObj->channels.end())
+            {
+                std::map<int, Client*>::iterator adminIt = serverObj->channels[channelName].operators.find(isAdmin);
+                if (adminIt != serverObj->channels[channelName].operators.end())
+                {
+                    serverObj->channels[channelName].clients.erase(toKickIt->first);
+                    std::map<int, Client*>::iterator isInvIt = serverObj->channels[channelName].inviteList.find(toKickIt->first);
+                    if (isInvIt != serverObj->channels[channelName].inviteList.end())
+                        serverObj->channels[channelName].inviteList.erase(toKickIt->first);
+                        std::map<int, Client*>::iterator isOperIt = serverObj->channels[channelName].operators.find(toKickIt->first);
+                    if (isOperIt != serverObj->channels[channelName].operators.end())
+                        serverObj->channels[channelName].operators.erase(toKickIt->first);
+                        serverObj->mapClient[toKickIt->first]->eraseClientChannel(channelName);
+                    std::map<int, Client*> members = serverObj->channels[channelName].getClients();
+                    for (std::map<int, Client*>::iterator it = members.begin(); it != members.end(); ++it) 
+                    {
+                        std::string message = ":" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "!" + serverObj->channels[channelName].operators[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " KICK #1 " + serverObj->mapClient[toKickIt->first]->getNickname() + " :" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "\r\n";
+                        send(it->first, message.c_str(), message.size(), 0);
+                    }
+                    std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " KICK #1 " + serverObj->mapClient[toKickIt->first]->getNickname() + " :" + serverObj->mapClient[isAdmin]->getNickname() + "\r\n";
+                    send(toKickIt->first, message.c_str(), message.size(), 0);
+                }
+                else
+                {
+                    std::string message = ": 482 " + serverObj->channels[channelName].clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+                    send(isAdmin, message.c_str(), message.size(), 0);
+                    return ;
+                }
+            }
+            std::cout << "---------Operators-IN-Kick--------\n";
+            std::map<int, Client*> admins = serverObj->channels[channelName].getOperators();
+            std::map<int, Client*>::iterator it_operator;
+            for (it_operator = admins.begin(); it_operator != admins.end(); ++it_operator)
+            {
+                std::cout << "*** kick operators now (" << it_operator->second->getNickname() << ")***\n";
+            }
         }
         else
         {
-            std::string message = ": 482 " + newMember->getNickname() + " " + channel->getName() + " :You're not channel operator\r\n";
-	        send(isAdmin, message.c_str(), message.size(), 0);
-        }
-    }
-    else 
+            std::string message = ":  401 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[2] + " :No such nick\r\n";
+       	    send(isAdmin, message.c_str(), message.size(), 0);
+        }   
+	}
+}
+
+void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> words)
+{
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[2]);
+    if (channelIt != serverObj->channels.end()) 
     {
-        std::cout << "here 5\n";
-        channel->addToInviteList(newMember);
-        std::string message = ":" + newMember->getNickname() + "!" + newMember->getUsername() + "@localhost MODE " + channel->getName() + " +i \r\n";
-	    send(isAdmin, message.c_str(), message.size(), 0);
-        std::cout << "User added to invite list" << std::endl;
+        bool found = false;
+        std::map<int, Client*>::iterator newMemberIt;
+        for (newMemberIt = serverObj->mapClient.begin(); newMemberIt != serverObj->mapClient.end(); newMemberIt++)
+        {
+            if (newMemberIt->second->nickname == words[1])
+            {
+                found = true;
+                break;
+            }
+        }
+        if (found)
+        {
+            if (channelIt->second.find_mode("i"))
+            {
+                std::map<int, Client*>::iterator it = channelIt->second.operators.find(isAdmin);
+                if (it != channelIt->second.operators.end())
+                {
+                    channelIt->second.addToInviteList(newMemberIt->second);
+                    std::string message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
+                    send(isAdmin, message.c_str(), message.size(), 0);
+                    message = ":" + channelIt->second.clients[isAdmin]->getNickname() + "!" + channelIt->second.clients[isAdmin]->getUsername() + "@" + newMemberIt->second->getLocation() + " INVITE " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + "\r\n";
+                    send(newMemberIt->second->getFd(), message.c_str(), message.size(), 0);
+                }
+                else
+                {
+                    std::string message = ": 482 " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + " :You're not channel operator\r\n";
+           	        send(isAdmin, message.c_str(), message.size(), 0);
+                }
+            }
+            else 
+            {
+                channelIt->second.addToInviteList(newMemberIt->second);
+                std::string message = ": 341 " + channelIt->second.clients[isAdmin]->getNickname() + " " + newMemberIt->second->getNickname() + " :" + channelIt->second.getName() + " \r\n";
+                send(isAdmin, message.c_str(), message.size(), 0);
+                message = ":" + channelIt->second.clients[isAdmin]->getNickname() + "!" + channelIt->second.clients[isAdmin]->getUsername() + "@" + newMemberIt->second->getLocation() + " INVITE " + newMemberIt->second->getNickname() + " " + channelIt->second.getName() + "\r\n";
+                send(newMemberIt->second->getFd(), message.c_str(), message.size(), 0);
+            }
+        }
+        else
+        {
+            std::string message = ": " + words[1] + " " + channelIt->second.getName() + " :No such nick\r\n";
+       	    send(isAdmin, message.c_str(), message.size(), 0);
+        }
     }
 }
 
-void Commands::topic(int isAdmin, std::string newTopic, Channel* channel)
+void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    if (newTopic != "")
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+    if (channelIt != serverObj->channels.end()) 
     {
-        if (channel->find_mode("t"))
+        if (words.size() == 2)
         {
-            std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-            if (it != channel->operators.end())
+            std::string topic = channelIt->second.getTopic();
+            if (topic.empty())
             {
-                channel->setTopic(newTopic);
-                std::cout << "Topic changed successfully list" << std::endl;
+                std::string message = ": 331 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :No topic is set.\r\n";
+     	        send(isAdmin, message.c_str(), message.size(), 0);
             }
             else
             {
-                std::cout << "You have to be an Operator to proceed this operation" << std::endl;
-                return ;
+                std::string message = ": 332 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :" + topic + "\r\n";
+    	        send(isAdmin, message.c_str(), message.size(), 0);
+            }
+        }
+        else if (channelIt->second.find_mode("t"))
+        {
+            std::map<int, Client*>::iterator it = channelIt->second.operators.find(isAdmin);
+            if (it != channelIt->second.operators.end())
+            {
+                std::string newTopic = words[2].substr(1); 
+                channelIt->second.setTopic(newTopic);
+                std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+       	        send(isAdmin, message.c_str(), message.size(), 0);
+            }
+            else
+            {
+                std::string message = ": 482 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
+                send(isAdmin, message.c_str(), message.size(), 0);
             }
         }
         else 
         {
-            channel->setTopic(newTopic);
-            std::cout << "Topic changed successfully list" << std::endl;
+            std::string newTopic = words[2].substr(1); 
+            channelIt->second.setTopic(newTopic);
+            std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+   	        send(isAdmin, message.c_str(), message.size(), 0);
         }
-    }
-    else
-    {
-        // Just view the topic
-        std::cout << channel->getTopic() << std::endl;
     }
 }
 
-void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> words)
+void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> words)
 {
-    std::map<int, Client*>::iterator it = channel->operators.find(isAdmin);
-    if (it != channel->operators.end())
-    {
-        std::cout << "In mode function\n";
-        if (words.size() == 2)
+    std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
+	if (channelIt != serverObj->channels.end()) 
+	{
+        std::map<int, Client*>::iterator it = serverObj->channels[words[1]].operators.find(isAdmin);
+        if (it != serverObj->channels[words[1]].operators.end())
         {
-            std::vector<std::string> channel_modes = channel->getModes();
-            std::vector<std::string>::iterator it_modes = channel_modes.begin();
-            std::string modes_str = "+";
-            for (long unsigned i = 0; i < channel_modes.size(); i++)
+            if (words.size() == 2)
             {
-                // std::cout << it_modes->c_str() << std::endl;
-                modes_str += it_modes->c_str();
+                std::vector<std::string> channel_modes = serverObj->channels[words[1]].getModes();
+                std::vector<std::string>::iterator it_modes = channel_modes.begin();
+                std::string modes_str = "+";
+                for (long unsigned i = 0; i < channel_modes.size(); i++)
+                    modes_str += it_modes->c_str();
+                std::string modeMessage = ": 324 " + it->second->getNickname() + "!" + it->second->getUsername() + " " + serverObj->channels[words[1]].getName() + " +n\r\n";
+                send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
             }
-            // std::cout << "----" + modes_str + "----\n";
-            // std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +i\r\n";
-            std::string modeMessage = ": 324 " + it->second->getNickname() + "!" + it->second->getUsername() + " " + channel->getName() + " +n\r\n";
-            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+            else if (!words[2].empty())
+            {
+                int sign = 0;
+                for (int i = 0; words[2][i] != '\0'; i++)
+                {
+                    std::cout << "Dekhla Inside for in mode " << words[2][i] << "iiii --> " << i << "\n";
+                    if (words[2][i] == '+')
+                    {
+                        sign = 1;
+                        i++;
+                    }
+                    else if (words[2][i] == '-')
+                    {
+                        sign = 2;
+                        i++;
+                    }
+                    std::cout << "Mor Sign Inside for in mode " << words[2][i] << "iiii --> " << i << "sign --> " << sign << "\n";
+                    if (sign == 1) ////////////////
+                    {
+                        if (words[2][i] == 'k')
+                        {
+                            serverObj->channels[words[1]].key = words[3];
+                            serverObj->channels[words[1]].modes.push_back("k");
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +k " + words[3].c_str() + "\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 't')
+                        {
+                            std::cout << "Inside topic in for in mode \n";
+                            serverObj->channels[words[1]].modes.push_back("t");
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +t\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'i')
+                        {
+                            serverObj->channels[words[1]].modes.push_back("i");
+        
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +i\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'l')
+                        {
+                            serverObj->channels[words[1]].limit = atoi(words[3].c_str());
+                            serverObj->channels[words[1]].modes.push_back("l");
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +l " + words[3].c_str() + "\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'o')
+                        {
+                            std::map<int, Client*> clients = serverObj->channels[words[1]].getClients();
+                            std::string nickName = words[3];
+                            std::map<int, Client*>::const_iterator iter;
+                            int clientFd = 0;
+                            for (iter = clients.begin(); iter != clients.end(); ++iter) 
+                            {
+                                std::string userName = iter->second->getNickname();
+                                if (userName == nickName)
+                                {
+                                    clientFd = iter->first;
+                                    break;
+                                }
+                            }
+                            if (clientFd != 0)
+                            {
+                                std::map<int, Client*> operators = serverObj->channels[words[1]].getOperators();
+                                std::map<int, Client*>::iterator isAlreadyOper = operators.find(clientFd);
+                                if (isAlreadyOper == operators.end())
+                                {
+                                    std::cout << "******** fuck off ********\n";
+                                    serverObj->channels[words[1]].setOperator(clientFd, clients[clientFd]);
+                                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +o " + words[3].c_str() + "\r\n";
+                                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                                }
+                                std::cout << "---------Operators-IN-Kick--------\n";
+                                std::map<int, Client*> admins = serverObj->channels[words[1]].getOperators();
+                                std::map<int, Client*>::iterator it_operator;
+                                for (it_operator = admins.begin(); it_operator != admins.end(); ++it_operator)
+                                {
+                                    std::cout << "*** kick operators now (" << it_operator->second->getNickname() << ")***\n";
+                                }
+                            }
+                        }
+                    }
+                    else if (sign == 2) ////////////////
+                    {
+                        if (words[2][i] == 'k')
+                        {
+                            std::vector<std::string>::iterator iter;
+                            for (iter = serverObj->channels[words[1]].modes.begin(); iter != serverObj->channels[words[1]].modes.end(); ++iter)
+                            {
+                                if (*iter == "k")
+                                {
+                                    serverObj->channels[words[1]].deleteMode("k");
+                                    break;
+                                }
+                            } 
+                            serverObj->channels[words[1]].key.clear();
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " -k " + words[3].c_str() + "\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'i')
+                        {
+                            std::vector<std::string> mods = serverObj->channels[words[1]].getModes();
+                            std::vector<std::string>::iterator iter;
+                            for (iter = mods.begin(); iter != mods.end(); ++iter)
+                            {
+                                if (*iter == "i")
+                                {
+                                    serverObj->channels[words[1]].deleteMode("i");
+                                    break;
+                                }
+                            }
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " -i\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'l')
+                        {
+                            std::vector<std::string>::iterator iter;
+                            for (iter = serverObj->channels[words[1]].modes.begin(); iter != serverObj->channels[words[1]].modes.end(); ++iter)
+                            {
+                                if (*iter == "l")
+                                {
+                                    serverObj->channels[words[1]].deleteMode("l");
+                                    break;
+                                }
+                            } 
+                            serverObj->channels[words[1]].setLimit(0);
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " -l \r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                        }
+                        else if (words[2][i] == 'o')
+                        {
+                            std::map<int, Client*> clients = serverObj->channels[words[1]].getClients();
+                            std::string nickName = words[3];
+                            std::map<int, Client*>::const_iterator it;
+                            int clientFd;
+                            for (it = clients.begin(); it != clients.end(); ++it) 
+                            {
+                                if (it->second->nickname == nickName)
+                                {
+                                    clientFd = it->first;
+                                    break;
+                                }
+                            }
+                            std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " -o " + words[3].c_str() + "\r\n";
+                            send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
+                            serverObj->channels[words[1]].operators.erase(clientFd);
+                        }
+                    }//end of else if -
+                }
+            }//end if words[2].empty
+            
         }
-        else if (!words[2].empty() && words[2][0] == '+')
+        else
         {
-            std::cout << "In mode function in + \n";
-            std::string modes = words[2];
-            for (int i = 1; modes[i] != '\0'; i++)
+            if (words.size() != 2)
             {
-                if (modes[i] == 'k')
-                {
-                    channel->key = words[3];
-                    channel->modes.push_back("k");
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +k " + words[3].c_str() + "\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    std::cout << "Channel password set to " << channel->key << std::endl;
-                }
-                else if (modes[i] == 'i')
-                {
-                    std::cout << "In mode function in invite condition \n";
-                    channel->modes.push_back("i");
-                    std::cout << "Channel is now invite only " << std::endl;
-
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +i\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                }
-                else if (modes[i] == 'l')
-                {
-                    channel->limit = atoi(words[3].c_str());
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +l " + words[3].c_str() + "\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    std::cout << "Channel limit is set to " << channel->limit << std::endl;
-                }
-                else if (modes[i] == 'o')
-                {
-                    std::map<int, Client*> clients = channel->getClients();
-                    std::string nickName = words[3];
-                    std::map<int, Client*>::const_iterator iter;
-                    int clientFd = 0;
-                    for (iter = clients.begin(); iter != clients.end(); ++iter) 
-                    {
-                        std::cout << "teeeeest\n";
-                        std::string userName = iter->second->getNickname();
-                        std::cout << "username --> " << userName << std::endl;
-                        if (userName == nickName)
-                        {
-                            std::cout << "+++" << clientFd << std::endl;
-                            clientFd = iter->first;
-                            break;
-                        }
-                    }
-                    if (clientFd != 0)
-                    {
-                        std::cout << "................. " << words[3].c_str() << std::endl;
-                        channel->setOperator(clientFd, clients[clientFd]);
-                        std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " +o " + words[3].c_str() + "\r\n";
-                        send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    }
-                    // else
-                    // {
-
-                    //     std::cout << "New operator added --> " << clients[clientFd]->nickname << std::endl;
-                    // }
-                }
+                std::string message = ": 482 " + serverObj->channels[words[1]].clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
+                send(isAdmin, message.c_str(), message.size(), 0);
             }
         }
-        else if (!words[2].empty() && words[2][0] == '-') ///////////////////////////////////////////////////////////////
-        {
-            std::string modes = words[2];
-            for (int i = 1; modes[i] != '\0'; i++)
-            {
-                if (modes[i] == 'k')
-                {
-                    std::vector<std::string>::iterator iter;
-                    for (iter = channel->modes.begin(); iter != channel->modes.end(); ++iter)
-                    {
-                        if (*iter == "k")
-                        {
-                            channel->deleteMode("k");
-                            break;
-                        }
-                    } 
-                    channel->key.clear();
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -k " + words[3].c_str() + "\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    std::cout << "Channel password removed"<< std::endl;
-                }
-                else if (modes[i] == 'i')
-                {
-                    std::vector<std::string> mods = channel->getModes();
-                    std::vector<std::string>::iterator iter;
-                    for (iter = mods.begin(); iter != mods.end(); ++iter)
-                    {
-                        if (*iter == "i")
-                        {
-                            channel->deleteMode("i");
-                            break;
-                        }
-                    }
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -i\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    std::cout << "Invite only mode removed"<< std::endl;
-                }
-                else if (modes[i] == 'l')
-                {
-                    std::vector<std::string>::iterator iter;
-                    for (iter = channel->modes.begin(); iter != channel->modes.end(); ++iter)
-                    {
-                        if (*iter == "l")
-                        {
-                            channel->deleteMode("l");
-                            break;
-                        }
-                    } 
-                    channel->setLimit(0);
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -l \r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    std::cout << "Channel limit removed"<< std::endl;
-                }
-                else if (modes[i] == 'o')
-                {
-                    std::map<int, Client*> clients = channel->getClients();
-                    std::string nickName = words[3];
-                    std::map<int, Client*>::const_iterator it;
-                    int clientFd;
-                    for (it = clients.begin(); it != clients.end(); ++it) 
-                    {
-                        if (it->second->nickname == nickName)
-                        {
-                            clientFd = it->first;
-                            break;
-                        }
-                    }
-                    std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + channel->getName() + " -o " + words[3].c_str() + "\r\n";
-                    send(isAdmin, modeMessage.c_str(), modeMessage.size(), 0);
-                    channel->operators.erase(clientFd);
-                    std::cout << "Operator removed from --> " << clients[clientFd]->nickname << std::endl;
-                }
-            }
-        }
-    }
-    else
-    {
-        std::cout << "You have to be an Operator to proceed this operation 5" << std::endl;
-        std::string message = ": 482 " + channel->clients[isAdmin]->getNickname() + " #1 :You're not channel operator \r\n";
-        send(isAdmin, message.c_str(), message.size(), 0);
-        // return ;
-    }
+	}
 }
 
 Commands::~Commands() {
-    // std::cout << "Default commands Destructor called" << std::endl;
 }

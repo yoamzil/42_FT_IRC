@@ -31,10 +31,10 @@ class Server
 
         int                         serverSocket;
         std::vector<pollfd>         clientSockets;
-		std::map <int, Client *> 	mapClient;
-		std::map<std::string, Channel> channels;
 
     public:
+		std::map <int, Client *> 	mapClient;
+		std::map<std::string, Channel> channels;
 		std::map <int, Client *> getClient();
 		void	setChannels(const std::map<std::string, Channel>& newChannels);
 		std::map<std::string, Channel> getChannels();

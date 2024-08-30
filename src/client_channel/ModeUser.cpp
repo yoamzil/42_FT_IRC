@@ -55,6 +55,27 @@ void ModeUser::Part(Server* serverObj, Client* clientObj, int clientSocket, std:
 	}
 }
 
+void ModeUser::Mode(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+	if (words[0] == "MODE" && !words[1].empty() && clientObj->getStatus() == 1)
+		mode(serverObj, clientSocket, words);
+}
+
+void ModeUser::Invite(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+	if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
+        invite(serverObj, clientSocket, words);
+}
+
+void ModeUser::Topic(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+	if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
+		topic(serverObj, clientSocket, words);
+}
+
+void ModeUser::Kick(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+	if (words[0] == "KICK" && !words[1].empty() && clientObj->getStatus() == 1)
+		kick(serverObj, clientSocket,words);
+}
+
+
 void ModeUser::Commande(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
 	// std::cout << words[0] << std::endl;
 	
@@ -66,6 +87,10 @@ void ModeUser::Commande(Server* serverObj, Client* clientObj, int clientSocket, 
     std::map<std::string, CommandFunc> commands;
     commands["JOIN"] = &ModeUser::Join;
     commands["PART"] = &ModeUser::Part;
+    commands["MODE"] = &ModeUser::Mode;
+    commands["INVITE"] = &ModeUser::Invite;
+    commands["TOPIC"] = &ModeUser::Topic;
+	commands["KICK"] = &ModeUser::Kick;
 
     std::map<std::string, CommandFunc>::iterator it = commands.find(words[0]);
     if (it != commands.end()) {
@@ -104,6 +129,7 @@ bool ModeUser::Check_Kick() {
 
 
 bool ModeUser::check_Comande(std::vector<std::string> & words) {
+
 	bool (ModeUser::*checkCommand[6])() = {&ModeUser::Check_Join, &ModeUser::Check_Part,
 											&ModeUser::Check_Topic, &ModeUser::Check_Invite,
 												&ModeUser::Check_Mode, &ModeUser::Check_Kick};
