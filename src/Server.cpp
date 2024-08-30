@@ -86,7 +86,7 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
 	
 	Client clientObj;
     char    buffer[512];
-	std::cout << "Received" << std::endl;
+	// std::cout << "Received" << std::endl;
 	
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
@@ -164,7 +164,7 @@ void    Server::start(Server*	serverObj)
                 {
                     acceptClient();
                 }
-                else if (clientSockets[i].fd != serverSocket)
+                if (clientSockets[i].fd != serverSocket)
                 {
                     handleClient(serverObj, clientSockets[i].fd);
                 }
