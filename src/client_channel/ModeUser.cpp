@@ -104,7 +104,6 @@ bool ModeUser::Check_Kick() {
 
 
 bool ModeUser::check_Comande(std::vector<std::string> & words) {
-	std::cout << "hello : " <<  words[0] << std::endl;
 	bool (ModeUser::*checkCommand[6])() = {&ModeUser::Check_Join, &ModeUser::Check_Part,
 											&ModeUser::Check_Topic, &ModeUser::Check_Invite,
 												&ModeUser::Check_Mode, &ModeUser::Check_Kick};
