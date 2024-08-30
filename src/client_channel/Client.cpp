@@ -1,4 +1,4 @@
-#include "../include/Client.hpp"
+#include "../../include/client_channel/Client.hpp"
 
 Client::Client()
 {
@@ -132,10 +132,11 @@ void Client::sendMessage(int clientSocket, const std::string& message) {
     send(clientSocket, message.c_str(), message.size(), 0);
 }
 
-void Client::sendList(Server *serverObj , __unused int clientSocket, const std::string& channelName)
+void Client::sendList(Server *serverObj , const std::string& channelName)
 {
-	std::map<std::string, Channel>::iterator it = serverObj->channels.find(channelName);
-	if (it != serverObj->channels.end()) {
+	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
+	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
+	if (it != currentChannels.end()) {
 		Channel& channel = it->second;
 		std::map<int, Client*> channelClients = channel.getClients();
 		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
@@ -148,18 +149,20 @@ void Client::sendList(Server *serverObj , __unused int clientSocket, const std::
 					msg = msg + " " + clien->getNickname();
 
 			}
-			std::string message1 = ": 353 " + serverObj->client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
-			std::string message2 = ": 366 " + serverObj->client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+			std::string message2 = ": 366 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
 			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
 		}
 	}
+	
 }
 
 void Client::LeaveSendList(Server *serverObj , __unused int clientSocket, const std::string& channelName)
 {
-	std::map<std::string, Channel>::iterator it = serverObj->channels.find(channelName);
-	if (it != serverObj->channels.end()) {
+	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
+	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
+	if (it != currentChannels.end()) {
 		Channel& channel = it->second;
 		std::map<int, Client*> channelClients = channel.getClients();
 		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
@@ -172,8 +175,8 @@ void Client::LeaveSendList(Server *serverObj , __unused int clientSocket, const 
 					msg = msg + " " + clien->getNickname();
 
 			}
-			std::string message1 = ": 353 " + serverObj->client[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->client[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
-			std::string message2 = ": 366 " + serverObj->client[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
+			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+			std::string message2 = ": 366 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
 			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
 		}
@@ -181,11 +184,14 @@ void Client::LeaveSendList(Server *serverObj , __unused int clientSocket, const 
 }
 
 void Client::leaveChannel(Server *serverObj, int clientSocket, const std::string& channelName) {
-	if (serverObj->client.find(clientSocket) != serverObj->client.end()) {
-		Client* clientObj = serverObj->client[clientSocket];
-		if (serverObj->channels.find(channelName) != serverObj->channels.end()) {
-			serverObj->channels[channelName].removeClient(clientObj);
+	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
+	if (serverObj->getClient().find(clientSocket) != serverObj->getClient().end()) {
+		Client* clientObj = serverObj->getClient()[clientSocket];
+		
+		if (currentChannels.find(channelName) != currentChannels.end()) {
+			currentChannels[channelName].removeClient(clientObj);
 			clientObj->eraseClientChannel(channelName);
+			serverObj->setChannels(currentChannels);
 
 			std::string message2 = ":" + clientObj->getNickname() + "!" + clientObj->getUsername() + clientObj->getLocation() + " PART " + channelName + " :Leaving\r\n";
 			send(clientObj->getFd(), message2.c_str(), message2.size(), 0);
@@ -195,12 +201,13 @@ void Client::leaveChannel(Server *serverObj, int clientSocket, const std::string
 	}
 }
 
+
 void Client::joinChannel(Server *serverObj, int clientSocket, const std::string& channelName, std::vector<std::string> words)
 {
 	bool joined = false;
-    if (serverObj->client.find(clientSocket) != serverObj->client.end()) 
+    if (serverObj->mapClient.find(clientSocket) != serverObj->mapClient.end()) 
 	{
-        Client* clientObj = serverObj->client[clientSocket];
+        Client* clientObj = serverObj->mapClient[clientSocket];
 
         // Check if the channel exists, if not, create it
         if (serverObj->channels.find(channelName) == serverObj->channels.end())
@@ -210,7 +217,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
             serverObj->channels[channelName] = Channel(channelName);
             serverObj->channels[channelName].setOperator(clientSocket, clientObj);
             serverObj->channels[channelName].setModes("n");
-			std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+			std::string message = ":" + serverObj->mapClient[clientSocket]->getNickname() + "!" + serverObj->mapClient[clientSocket]->getUsername() + "@"  + serverObj->mapClient[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
 			send(clientSocket, message.c_str(), message.size(), 0);
 			
 			serverObj->channels[channelName].addClient(clientObj);
@@ -234,7 +241,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
 				// clientObj->setChannelName(channelName);
 
                 //first part
-                std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+                std::string message = ":" + serverObj->mapClient[clientSocket]->getNickname() + "!" + serverObj->mapClient[clientSocket]->getUsername() + "@"  + serverObj->mapClient[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
 				send(clientSocket, message.c_str(), message.size(), 0);
             
                 //Hamza code variable
@@ -263,7 +270,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                     }
                     else
                     {
-                        std::string message = ": 473 " + serverObj->client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
+                        std::string message = ": 473 " + serverObj->mapClient[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
                         send(clientSocket, message.c_str(), message.size(), 0);
                         std::cout << "You Should be invited to join this channel!" << std::endl;
                     }
@@ -278,7 +285,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                     else
                     {
                         // :Aurora.AfterNET.Org 471 iii #1 :Cannot join channel (+l)
-                        std::string message = ": 471 " + serverObj->client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
+                        std::string message = ": 471 " + serverObj->mapClient[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
                         send(clientSocket, message.c_str(), message.size(), 0);
                     }
                 }
@@ -292,7 +299,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                             modesCount++;
                         else
                         {
-                            std::string message = ": 475 " + serverObj->client[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+k)\r\n";
+                            std::string message = ": 475 " + serverObj->mapClient[clientSocket]->getNickname() + " " + channelName + " :Cannot join channel (+k)\r\n";
                             send(clientSocket, message.c_str(), message.size(), 0);
                         }
                     }
@@ -321,7 +328,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
 					// clientObj->setChannelName(channelName);
 
                     //first part
-                   	std::string message = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@"  + serverObj->client[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
+                   	std::string message = ":" + serverObj->mapClient[clientSocket]->getNickname() + "!" + serverObj->mapClient[clientSocket]->getUsername() + "@"  + serverObj->mapClient[clientSocket]->getLocation() + " JOIN " + channelName + " * :realname\r\n";
 					send(clientSocket, message.c_str(), message.size(), 0);
 					
 					// serverObj->channels[channelName].addClient(clientObj);
@@ -353,24 +360,21 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                 send(it->first, message.c_str(), message.size(), 0);
             }
         }
-       	sendList(serverObj , clientSocket , channelName);
+       	sendList(serverObj, channelName);
    	}
 }
 
 
-
-
-
-
 void Client::broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket) {
-    std::map<std::string, Channel>::iterator it = serverObj->channels.find(channelName);
-	std::vector<std::string> channelNames = serverObj->client[clientSocket]->getChannelName();
-    if (it != serverObj->channels.end()) {
+    std::map<std::string, Channel> currentChannels = serverObj->getChannels();
+	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
+	std::vector<std::string> channelNames = serverObj->getClient()[clientSocket]->getChannelName();
+    if (it != currentChannels.end()) {
         Channel& channel = it->second;
         std::map<int, Client*> channelClients = channel.getClients();
 		// std::string message1 = "353 " + client[clientSocket]->getNickname() + " = " + channelName + " :" + client[clientSocket]->getNickname() + "!" + client[clientSocket]->getUsername() + "@localhost\r\n";
 		// std::string message2 = "366 " + client[clientSocket]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
-		std::string  msg = ":" + serverObj->client[clientSocket]->getNickname() + "!" + serverObj->client[clientSocket]->getUsername() + "@" + serverObj->client[clientSocket]->getLocation() + " " + message + "\r\n";
+		std::string  msg = ":" + serverObj->getClient()[clientSocket]->getNickname() + "!" + serverObj->getClient()[clientSocket]->getUsername() + "@" + serverObj->getClient()[clientSocket]->getLocation() + " " + message + "\r\n";
         for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
             Client* cliente = clientIt->second;
 			for (std::vector<std::string>::iterator nt = channelNames.begin(); nt != channelNames.end(); ++nt)
@@ -379,162 +383,70 @@ void Client::broadcastMessage(Server *serverObj, const std::string& channelName,
 				{
 					if (cliente->getFd() != clientSocket)
 						cliente->sendMessage(cliente->getFd() , msg);
-					std::cout << "channelName : " << *nt << std::endl;
+					// std::cout << "channelName : " << *nt << std::endl;
 				}
 			}
         }
     }
 }
 
-void	Client::authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words)
-{
-	if (words[0] == "PASS" && words.size() == 2)
-	{
-		if (words[1] == serverObj->getPassword())
-		{
-			clientObj->setCorrectPass();
-			// client.setPassword(password);
-			std::cout << clientSocket << " : password is correct" << std::endl;
-		}
-		else if (words[1] != serverObj->getPassword())
-		{
-			std::cout << clientSocket << " : password  incorrect" << std::endl;
-		}
-	}
-	else if (words[0] == "NICK" && clientObj->correctpass() == 1 && !words[1].empty() && words.size() == 2)
-	{
-		// int i = 0;
-		for (std::map<int, Client*>::iterator clientIt = serverObj->client.begin(); clientIt != serverObj->client.end(); ++clientIt) {
-        	Client* client = clientIt->second;
-			if (client->getNickname() != words[1] && client->getNickname().empty()){
-				// std::string str = client->getNickname();
-				client->setNikename(words[1]);
-				// clientObj->setNikename(words[1]);
-				// sendMessage(clientSocket , ":" +  clientObj->getNickname()  + "!" + client->getUsername() + "@localhost NICK :" + client->getNickname() + "\r\n");
-				clientObj->setStatus(0);
-
-				std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-				return ;
-			}
-			else if (client->getNickname() != words[1] && !clientObj->getNickname().empty())
-			{
-				std::string str = client->getNickname();
-				client->setNikename(words[1]);
-				clientObj->setNikename(words[1]);
-				clientObj->sendMessage(clientSocket , ":" + str + "!" + client->getUsername() + "@localhost NICK :" + client->getNickname() + "\r\n");
-				std::cout <<  "change a Nick  : " << words[1] << " , Id : " << clientObj->getFd() << " correct ID : " << client->correctpass()  << std::endl;
-				return;
-			}
-			else if (client->getNickname() == words[1])
-			{
-				std::cout <<  "Nick already exist : " << words[1] <<  " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-				// 433 * hamza :Nickname is already in use.
-				clientObj->sendMessage(clientSocket , ": 433 * " + client->getNickname() + " :Nickname is already in use.\r\n");
-				// std::cout << "nick "  << client->getNickname() << " Nick already exist : " << words[1]  << "  -- > " << i << std::endl;
-				return;
-			}
-		}
-	}
-	else if (words[0] == "USER" && clientObj->correctpass() == 1 && !words[1].empty())
-	{
-		if (words.size() == 5)
-		{
-			clientObj->setUsername(words[1]);
-			clientObj->setLocation(words[3]);
-			std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
-		}
-		else if (words.size() != 5)
-		{
-			std::cout << "please enter the correct USER" << std::endl;
-		}
-		
-	}
-}
-
-void Client::handleMessage(Server* serverObj, int clientSocket, const std::string& message)
-{
-	Client* clientObj;
-	
-	std::vector<std::string> input;
-	if (serverObj->client.find(clientSocket) != serverObj->client.end()) {
-
-        clientObj = serverObj->client[clientSocket];
-        // Use clientObj to interact with the client
+void Client::handleMessage(Server* serverObj, int clientSocket, const std::string& message) {
+    Client* clientObj;
+    std::vector<std::string> input;
+	Authentications auth;
+	ModeUser command;
+    
+    // Check if the client exists
+	if (message.empty()) 
+		return ;
+    if (serverObj->getClient().find(clientSocket) != serverObj->getClient().end()) {
+        clientObj = serverObj->getClient()[clientSocket];
     }
-	if (message.find("\r\n"))
-	{
-		std::vector<std::string> words;
-		std::string delimiter = "\r\n";
-		input = clientObj->splitString(message, delimiter);
-		if (input.size() > 1)
-		{
-			for (size_t i = 0; i < input.size() - 1; ++i) {
-				words =clientObj->splitString1(input[i]);
-				clientObj->authentication(serverObj, clientObj, clientSocket, words);
-			}
-		}
-		else{
-			words = clientObj->splitString1(input[0]);
-			clientObj->authentication(serverObj, clientObj, clientSocket, words);
-		}
 
-		if (clientObj->correctpass() == 1 && clientObj->getNickname() != "\0" && clientObj->getUsername() != "\0" && clientObj->getStatus() == 0)
-		{
-			clientObj->setFd(clientSocket);
-			clientObj->setAuthentication();
-		}
-		if (clientObj->getAuthentication() == 1)
-		{
+    if (message.find("\r\n")) {
+        std::vector<std::string> words;
+        std::string delimiter = "\r\n";
+        input = clientObj->splitString(message, delimiter);
 
-			if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
+        if (input.size() > 1) {
+            for (size_t i = 0; i < input.size() - 1; ++i) {
+                words = clientObj->splitString1(input[i]);
+                auth.Login(serverObj, clientObj, clientSocket, words);
+            }
+        } else {
+            words = clientObj->splitString1(input[0]);
+            auth.Login(serverObj, clientObj, clientSocket, words);
+        }
 
-				if (words[1][0] == '#')
-				{
-					clientObj->joinChannel(serverObj, clientSocket, words[1], words);
-				}
-				else if (words[1][0] != '#')
-				{
-					std::string message = ": 403 * " + clientObj->getNickname() + " " + words[1] + " :No such channel\r\n";
-					clientObj->sendMessage(clientSocket, message);
-				}
-			}
-			else if (words[0] == "KICK" && !words[1].empty() && clientObj->getStatus() == 1)
-				kick(serverObj, clientSocket,words);
-			else if (words[0] == "MODE" && !words[1].empty() && clientObj->getStatus() == 1)
-				mode(serverObj, clientSocket, words);
-			else if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
-                invite(serverObj, clientSocket, words);
-			else if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
-			    topic(serverObj, clientSocket, words);
-			else if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
-				std::cout << "Entering part\n";
-				if (words[1][0] == '#')
-				{
-					std::string message = ": remove\r\n";
-					clientObj->leaveChannel(serverObj, clientSocket, words[1]);
-				}
-				else if (words[1][0] != '#')
-				{
-					std::string message = ": not remove\r\n";
-				}
-			}
-			else if(words[0] != "JOIN" && words[0] != "PART" && words[0] != "TOPIC" && words[0] != "INVITE" && words[0] != "MODE" && words[0] != "KICK" && clientObj->getStatus() == 1)
-			{
-				std::cout << "message : " << message << std::endl;
-				if (!message.find("PRIVMSG"))
-				{
-					clientObj->broadcastMessage(serverObj , words[1], message, clientSocket);
-				}
-			}
-		}
-		if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
+        if (clientObj->correctpass() == 1 && !clientObj->getNickname().empty() && !clientObj->getUsername().empty() && clientObj->getStatus() == 0) {
+            clientObj->setFd(clientSocket);
+            clientObj->setAuthentication();
+        }
+
+        if (clientObj->getAuthentication() == 1)
 		{
-			// :irc.example.com 001 dan :Welcome to the IRCcom Network, dan
-			std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@" + serverObj->client[clientSocket]->getLocation() + "\r\n";
-			clientObj->sendMessage(clientSocket, message); //"<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
-			clientObj->setStatus(1);
-		}
-	}
+			if (clientObj->getStatus() == 1)
+			{
+				command.Commande(serverObj, clientObj, clientSocket, words);
+			}
+			if (!command.check_Comande(words) && clientObj->getStatus() == 1)
+			{
+                if (!message.find("PRIVMSG"))
+				{
+                    clientObj->broadcastMessage(serverObj, words[1], message, clientSocket);
+                }
+			}
+        }
+        if (clientObj->getAuthentication() == 0 && clientObj->getStatus() == 0 && words[0] != "NICK" && words[0] != "USER" && words[0] != "PASS")
+		{
+            std::string message = ":irc.example.com 451 " + clientObj->getNickname() + " :You have not registered\r\n";
+            clientObj->sendMessage(clientSocket, message);
+        }
+        if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
+		{
+            std::string message = ": 001 " + clientObj->getNickname() + " :Welcome to the IRC Network, " + clientObj->getNickname() + "!" + clientObj->getUsername() + "@" + serverObj->getClient()[clientSocket]->getLocation() + "\r\n";
+            clientObj->sendMessage(clientSocket, message);
+            clientObj->setStatus(1);
+        }
+    }
 }

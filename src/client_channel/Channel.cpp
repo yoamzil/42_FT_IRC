@@ -1,4 +1,4 @@
-#include "../include/Channel.hpp"
+#include "../../include/client_channel/Channel.hpp"
 
 Channel::Channel(const std::string& name) : name(name) {}
 
@@ -30,9 +30,7 @@ void Channel::removeClient(Client* client) {
 
 void Channel::setOperator(int clientSocket, Client* newOperator)
 {
- //    std::map<int, Client*>::iterator isAlreadyOper = operators.find(clientSocket);
-	// if (isAlreadyOper == operators.end())
-        operators.insert(std::make_pair(clientSocket, newOperator));
+    operators.insert(std::make_pair(clientSocket, newOperator));
 }
 
 void Channel::addToInviteList(Client* newMember)

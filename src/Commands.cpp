@@ -1,6 +1,6 @@
 #include "../include/Commands.hpp"
-#include "../include/Channel.hpp"
-#include "../include/Client.hpp"
+#include "../include/client_channel/Channel.hpp"
+#include "../include/client_channel/Client.hpp"
 
 Commands::Commands() {
 }
@@ -43,14 +43,14 @@ void Commands::kick(Server* serverObj, int isAdmin, std::vector<std::string> wor
                         std::map<int, Client*>::iterator isOperIt = serverObj->channels[channelName].operators.find(toKickIt->first);
                     if (isOperIt != serverObj->channels[channelName].operators.end())
                         serverObj->channels[channelName].operators.erase(toKickIt->first);
-                        serverObj->client[toKickIt->first]->eraseClientChannel(channelName);
+                        serverObj->mapClient[toKickIt->first]->eraseClientChannel(channelName);
                     std::map<int, Client*> members = serverObj->channels[channelName].getClients();
                     for (std::map<int, Client*>::iterator it = members.begin(); it != members.end(); ++it) 
                     {
-                        std::string message = ":" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "!" + serverObj->channels[channelName].operators[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKickIt->first]->getNickname() + " :" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "\r\n";
+                        std::string message = ":" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "!" + serverObj->channels[channelName].operators[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " KICK #1 " + serverObj->mapClient[toKickIt->first]->getNickname() + " :" + serverObj->channels[channelName].operators[isAdmin]->getNickname() + "\r\n";
                         send(it->first, message.c_str(), message.size(), 0);
                     }
-                    std::string message = ":" + serverObj->client[isAdmin]->getNickname() + "!" + serverObj->client[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " KICK #1 " + serverObj->client[toKickIt->first]->getNickname() + " :" + serverObj->client[isAdmin]->getNickname() + "\r\n";
+                    std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " KICK #1 " + serverObj->mapClient[toKickIt->first]->getNickname() + " :" + serverObj->mapClient[isAdmin]->getNickname() + "\r\n";
                     send(toKickIt->first, message.c_str(), message.size(), 0);
                 }
                 else
@@ -70,7 +70,7 @@ void Commands::kick(Server* serverObj, int isAdmin, std::vector<std::string> wor
         }
         else
         {
-            std::string message = ":  401 " + serverObj->client[isAdmin]->getNickname() + " " + words[2] + " :No such nick\r\n";
+            std::string message = ":  401 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[2] + " :No such nick\r\n";
        	    send(isAdmin, message.c_str(), message.size(), 0);
         }   
 	}
@@ -83,7 +83,7 @@ void Commands::invite(Server* serverObj, int isAdmin, std::vector<std::string> w
     {
         bool found = false;
         std::map<int, Client*>::iterator newMemberIt;
-        for (newMemberIt = serverObj->client.begin(); newMemberIt != serverObj->client.end(); newMemberIt++)
+        for (newMemberIt = serverObj->mapClient.begin(); newMemberIt != serverObj->mapClient.end(); newMemberIt++)
         {
             if (newMemberIt->second->nickname == words[1])
             {
@@ -137,12 +137,12 @@ void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> wo
             std::string topic = channelIt->second.getTopic();
             if (topic.empty())
             {
-                std::string message = ": 331 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :No topic is set.\r\n";
+                std::string message = ": 331 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :No topic is set.\r\n";
      	        send(isAdmin, message.c_str(), message.size(), 0);
             }
             else
             {
-                std::string message = ": 332 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :" + topic + "\r\n";
+                std::string message = ": 332 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :" + topic + "\r\n";
     	        send(isAdmin, message.c_str(), message.size(), 0);
             }
         }
@@ -153,12 +153,12 @@ void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> wo
             {
                 std::string newTopic = words[2].substr(1); 
                 channelIt->second.setTopic(newTopic);
-                std::string message = ":" + serverObj->client[isAdmin]->getNickname() + "!" + serverObj->client[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+                std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
        	        send(isAdmin, message.c_str(), message.size(), 0);
             }
             else
             {
-                std::string message = ": 482 " + serverObj->client[isAdmin]->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
+                std::string message = ": 482 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
                 send(isAdmin, message.c_str(), message.size(), 0);
             }
         }
@@ -166,7 +166,7 @@ void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> wo
         {
             std::string newTopic = words[2].substr(1); 
             channelIt->second.setTopic(newTopic);
-            std::string message = ":" + serverObj->client[isAdmin]->getNickname() + "!" + serverObj->client[isAdmin]->getUsername() + "@" + serverObj->client[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+            std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
    	        send(isAdmin, message.c_str(), message.size(), 0);
         }
     }

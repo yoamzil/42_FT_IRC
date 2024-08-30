@@ -1,8 +1,8 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
-#include "../include/Server.hpp"
-#include "../include/Client.hpp"
+#include "../Server.hpp"
+#include "Client.hpp"
 
 class Client;
 class Server;
