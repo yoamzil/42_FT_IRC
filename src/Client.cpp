@@ -500,52 +500,9 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 				}
 			}
 			else if (words[0] == "KICK" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
-                // std::cout << "entering kick \n";
-				std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
-				if (channelIt != serverObj->channels.end()) 
-				{
-					// Channel* channelPtr = &(channelIt->second);
-					std::map<std::string, Channel> channels = serverObj->channels;
-					bool found = false;
-					std::map<int, Client*> channelClients = channels[words[1]].getClients();
-					std::map<int, Client*>::iterator it;
-					for (it = channelClients.begin(); it != channelClients.end(); it++)
-					{
-	                    std::cout << it->second->getNickname() << std::endl;
-						std::cout << words.size() << std::endl;
-					    std::cout << "-->" + words[2] << std::endl;
-						if (it->second->getNickname() == words[2])
-						{
-		                    std::cout << "entering kick in if \n";
-							found = true;
-							break;
-						}
-						std::cout << "........\n";
-					}
-					if (found)
-					{
-					    std::cout << "kick in found \n";
-						kick(serverObj, clientSocket, it->first, &channels[words[1]]);
-					}
-					else
-                    {
-                        std::string message = ":  401 " + serverObj->client[clientSocket]->getNickname() + " " + words[2] + " :No such nick\r\n";
-                   	    send(clientSocket, message.c_str(), message.size(), 0);
-                    }
-				}
-			}
+				kick(serverObj, clientSocket,words);
 			else if (words[0] == "MODE" && !words[1].empty() && clientObj->getStatus() == 1)
-			{
-				std::cout << "Entering mode\n";
-				std::map<std::string, Channel>::iterator channelIt = serverObj->channels.find(words[1]);
-				if (channelIt != serverObj->channels.end()) 
-				{
-                    std::cout << "Entering mode\n";
-					Channel* channelPtr = &(channelIt->second);
-					mode(clientSocket, channelPtr,words);
-				}
-			}
+				mode(serverObj, clientSocket, words);
 			else if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
                 invite(serverObj, clientSocket, words);
 			else if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
