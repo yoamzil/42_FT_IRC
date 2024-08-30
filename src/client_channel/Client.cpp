@@ -331,10 +331,6 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
 }
 
 
-
-
-
-
 void Client::broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket) {
     std::map<std::string, Channel> currentChannels = serverObj->getChannels();
 	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
@@ -353,7 +349,7 @@ void Client::broadcastMessage(Server *serverObj, const std::string& channelName,
 				{
 					if (cliente->getFd() != clientSocket)
 						cliente->sendMessage(cliente->getFd() , msg);
-					std::cout << "channelName : " << *nt << std::endl;
+					// std::cout << "channelName : " << *nt << std::endl;
 				}
 			}
         }
@@ -367,8 +363,6 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 	ModeUser command;
     
     // Check if the client exists
-	if (message.empty()) 
-		return ;
     if (serverObj->getClient().find(clientSocket) != serverObj->getClient().end()) {
         clientObj = serverObj->getClient()[clientSocket];
     }
@@ -377,8 +371,8 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
         std::vector<std::string> words;
         std::string delimiter = "\r\n";
         input = clientObj->splitString(message, delimiter);
-
-        if (input.size() > 1) {
+		if (input.size() > 1)
+		{
             for (size_t i = 0; i < input.size() - 1; ++i) {
                 words = clientObj->splitString1(input[i]);
                 auth.Login(serverObj, clientObj, clientSocket, words);
@@ -399,13 +393,14 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 			{
 				command.Commande(serverObj, clientObj, clientSocket, words);
 			}
-			if (!command.check_Comande(words) && clientObj->getStatus() == 1)
+			else if (!command.check_Comande(words) && clientObj->getStatus() == 1)
 			{
                 if (!message.find("PRIVMSG"))
 				{
                     clientObj->broadcastMessage(serverObj, words[1], message, clientSocket);
                 }
 			}
+			
         }
         if (clientObj->getAuthentication() == 1 && clientObj->getStatus() == 0)
 		{

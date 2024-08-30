@@ -3,7 +3,7 @@
 #include "../include/client_channel/Client.hpp"
 
 Commands::Commands() {
-    std::cout << "Default commands constructor called";
+    // std::cout << "Default commands constructor called";
 }
 
 void Commands::kick(int isAdmin, int toKick, Channel* channel) {
@@ -262,5 +262,5 @@ void Commands::mode(int isAdmin, Channel* channel, std::vector<std::string> word
 }
 
 Commands::~Commands() {
-    std::cout << "Default commands Destructor called" << std::endl;
+    // std::cout << "Default commands Destructor called" << std::endl;
 }

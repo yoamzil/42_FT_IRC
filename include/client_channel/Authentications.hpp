@@ -12,7 +12,7 @@ class Authentications {
 		Authentications();
 		void Pass(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		void User( Client* clientObj, int clientSocket, std::vector<std::string> & words);
-		void Nick( Client* clientObj, int clientSocket, std::vector<std::string> & words);
+		void Nick(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		void Login(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		~Authentications();
 };

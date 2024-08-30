@@ -7,6 +7,19 @@ Authentications::~Authentications() {
 }
 
 
+bool check_nick(std::string &nick) {
+	if (nick.size() > 9) {
+		return 1;
+	}
+	for (size_t i = 0; i < nick.size(); i++) {
+		if (!std::isalnum(nick[i]) && nick[i] != '_' && nick[i] != '-') {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 void Authentications::Pass(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
 	if (words[0] == "PASS" && words.size() == 2)
 	{
@@ -14,21 +27,38 @@ void Authentications::Pass(Server* serverObj, Client* clientObj, int clientSocke
 		{
 			clientObj->setCorrectPass();
 			// client.setPassword(password);
-			std::cout << clientSocket << " : password is correct" << std::endl;
+
 		}
 		else if (words[1] != serverObj->getPassword())
 		{
-			std::cout << clientSocket << " : password  incorrect" << std::endl;
+			std::string str = ":server_name 464 " + clientObj->getNickname() + " :Password incorrect\r\n";
+			clientObj->sendMessage(clientSocket, str);
 		}
 	}
 }
 
-void Authentications::Nick(Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "NICK" && clientObj->correctpass() == 1 && !words[1].empty() && words.size() == 2)
+void Authentications::Nick(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+	
+	std::map<int, Client *> mapClient = serverObj->getClient();
+	for (std::map<int, Client *>::iterator it = mapClient.begin(); it != mapClient.end(); ++it)
 	{
-		if (clientObj->getNickname() != words[1] && clientObj->getNickname().empty()){
+		if (it->second->getNickname() == words[1]  && !words[1].empty() && words.size() == 2)
+		{
+			std::string str = ":server_name 433 * " + words[1] + " :Nickname is already in use\r\n";
+			clientObj->sendMessage(clientSocket, str);
+			return;
+		}
+	}
+	if (words[0] == "NICK" && !words[1].empty() && words.size() == 2)
+	{
+		if (check_nick(words[1])) {
+			std::string str = ":server_name 432 * " + words[1] + " :Erroneous nickname\r\n";
+			clientObj->sendMessage(clientSocket, str);
+			return;
+		}
+		else if (clientObj->getNickname() != words[1] && clientObj->getNickname().empty()){
 			clientObj->setNikename(words[1]);
-			clientObj->setStatus(0);
+			// clientObj->setStatus(0);
 			std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
 			return ;
 		}
@@ -37,31 +67,34 @@ void Authentications::Nick(Client* clientObj, int clientSocket, std::vector<std:
 			std::string str = clientObj->getNickname();
 			clientObj->setNikename(words[1]);
 			clientObj->sendMessage(clientSocket , ":" + str + "!" + clientObj->getUsername() + "@localhost NICK :" + clientObj->getNickname() + "\r\n");
-			std::cout <<  "change a Nick  : " << words[1] << " , Id : " << clientObj->getFd() << " correct ID : " << clientObj->correctpass()  << std::endl;
+			// std::cout <<  "change a Nick  : " << words[1] << " , Id : " << clientObj->getFd() << " correct ID : " << clientObj->correctpass()  << std::endl;
 			return;
 		}
-		else if (clientObj->getNickname() == words[1])
-		{
-			std::cout <<  "Nick already exist : " << words[1] <<  " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
-			clientObj->sendMessage(clientSocket , ": 433 * " + clientObj->getNickname() + " :Nickname is already in use.\r\n");
-			return;
-		}
+	}
+	else if (!words[1].empty() && words[0] == "NICK")
+	{
+		clientObj->sendMessage(clientSocket , ":server_name 431 * :No nickname given\r\n");
+		return;
 	}
 }
 
 
 void Authentications::User(Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "USER" && clientObj->correctpass() == 1 && !words[1].empty())
+	if (words[0] == "USER" && !words[1].empty())
 	{
-		if (words.size() == 5)
+		if (words.size() == 5 && clientObj->getUsername().empty())
 		{
 			clientObj->setUsername(words[1]);
 			clientObj->setLocation(words[3]);
 			std::cout <<  "Create a USER : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass() << std::endl;
 		}
+		else if (words.size() == 5 && !clientObj->getUsername().empty())
+		{
+			clientObj->sendMessage(clientSocket , ":server_name 462 * :You may not reregister\r\n");
+		}
 		else if (words.size() != 5)
 		{
-			std::cout << "please enter the correct USER" << std::endl;
+			clientObj->sendMessage(clientSocket , ":server_name 461 * USER :Not enough parameters\r\n");
 		}
 		
 	}
@@ -79,7 +112,7 @@ void Authentications::Login(Server* serverObj, Client* clientObj, int clientSock
     std::map<std::string, CommandFunc> commands1;
     commands0["PASS"] = &Authentications::Pass;
     commands1["USER"] = &Authentications::User;
-    commands1["NICK"] = &Authentications::Nick;
+    commands0["NICK"] = &Authentications::Nick;
 
     std::map<std::string, CommandPass>::iterator it = commands0.find(words[0]);
     if (it != commands0.end()) {
@@ -92,6 +125,6 @@ void Authentications::Login(Server* serverObj, Client* clientObj, int clientSock
 		(this->*func)(clientObj, clientSocket, words);
 	}
 	else {
-        std::cout << "Unknown command: " << words[0] << std::endl;
+        // std::cout << "Unknown command: " << words[0] << std::endl;
     }
 }
