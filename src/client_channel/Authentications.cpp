@@ -67,7 +67,6 @@ void Authentications::Nick(Server* serverObj, Client* clientObj, int clientSocke
 			std::string str = clientObj->getNickname();
 			clientObj->setNikename(words[1]);
 			clientObj->sendMessage(clientSocket , ":" + str + "!" + clientObj->getUsername() + "@localhost NICK :" + clientObj->getNickname() + "\r\n");
-			// std::cout <<  "change a Nick  : " << words[1] << " , Id : " << clientObj->getFd() << " correct ID : " << clientObj->correctpass()  << std::endl;
 			return;
 		}
 	}
@@ -124,7 +123,4 @@ void Authentications::Login(Server* serverObj, Client* clientObj, int clientSock
 		CommandFunc func = ite->second;
 		(this->*func)(clientObj, clientSocket, words);
 	}
-	else {
-        // std::cout << "Unknown command: " << words[0] << std::endl;
-    }
 }

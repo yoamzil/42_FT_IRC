@@ -1,0 +1,14 @@
+PASS 13
+
+USER hben * lolz lolz
+
+NICK hben
+
+
+nc localhost 2024
+
+USER hben hben hben hben 
+
+PASS 13
+
+NICK hben

@@ -40,60 +40,79 @@ void ModeUser::Join(Server* serverObj, Client* clientObj, int clientSocket, std:
 
 void ModeUser::Part(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
 	int j = 0;
-	if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
-	{
-		std::vector<std::string>::iterator it = std::find(clientObj->getChannelName().begin(), clientObj->getChannelName().end(), words[1]);
-		if (it != clientObj->getChannelName().end())
+	if (words.size() >= 2 ) {
+		if (words[0] == "PART" && !words[1].empty() && clientObj->getStatus() == 1)
 		{
-			j = 1;
-		}
-		if (words[1][0] == '#' && j == 1)
-		{
-			clientObj->leaveChannel(serverObj, clientSocket, words[1]);
-		} else if (words[1][0] != '#')
-		{
-			std::string message = ": 403 * " + clientObj->getNickname() + " " + words[1] + " :No such channel\r\n";
-			clientObj->sendMessage(clientSocket, message);
-		}
-		else if (j == 0)
-		{
-			std::string message = ": 442 * " + clientObj->getNickname() + " " + words[1] + " :You're not on that channel\r\n";
-			clientObj->sendMessage(clientSocket, message);
+			std::vector<std::string>::iterator it = std::find(clientObj->getChannelName().begin(), clientObj->getChannelName().end(), words[1]);
+			if (it != clientObj->getChannelName().end())
+			{
+				j = 1;
+			}
+			if (words[1][0] == '#' && j == 1)
+			{
+				clientObj->leaveChannel(serverObj, clientSocket, words[1]);
+			} else if (words[1][0] != '#')
+			{
+				std::string message = ": 403 * " + clientObj->getNickname() + " " + words[1] + " :No such channel\r\n";
+				clientObj->sendMessage(clientSocket, message);
+			}
+			else if (j == 0)
+			{
+				std::string message = ": 442 * " + clientObj->getNickname() + " " + words[1] + " :You're not on that channel\r\n";
+				clientObj->sendMessage(clientSocket, message);
+			}
 		}
 	}
-	else if (words[0] == "PART" && words[1].empty())
-	{
-		std::string message = ": 461 * PART :Not enough parameters\r\n";
-		clientObj->sendMessage(clientSocket, message);
+	else if (words.size() < 2) {
+			std::string message = ": 461 * PART :Not enough parameters\r\n";
+			clientObj->sendMessage(clientSocket, message);
 	}
 }
 
 void ModeUser::Mode(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "MODE" && !words[1].empty() && clientObj->getStatus() == 1)
+	if (words[0] == "MODE" && words.size() > 1 && clientObj->getStatus() == 1)
 		mode(serverObj, clientSocket, words);
+	else if (words.size() < 2)
+	{
+		std::string message = ": 461 * MODE :Not enough parameters\r\n";
+		clientObj->sendMessage(clientSocket, message);
+	}
 }
 
 void ModeUser::Invite(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "INVITE" && !words[1].empty() && clientObj->getStatus() == 1)
+	if (words[0] == "INVITE" && words.size() > 1 && clientObj->getStatus() == 1)
         invite(serverObj, clientSocket, words);
+	else if (words.size() < 2)
+	{
+		std::string message = ": 461 * INVITE :Not enough parameters\r\n";
+		clientObj->sendMessage(clientSocket, message);
+	}
 }
 
 void ModeUser::Topic(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "TOPIC" && !words[1].empty() && clientObj->getStatus() == 1)
+	if (words[0] == "TOPIC" && words.size() > 1 && clientObj->getStatus() == 1)
 		topic(serverObj, clientSocket, words);
+	else if (words.size() < 2)
+	{
+		std::string message = ": 461 * TOPIC :Not enough parameters\r\n";
+		clientObj->sendMessage(clientSocket, message);
+	}
 }
 
 void ModeUser::Kick(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	if (words[0] == "KICK" && !words[1].empty() && clientObj->getStatus() == 1)
+	if (words[0] == "KICK" && words.size() > 1 && clientObj->getStatus() == 1)
 		kick(serverObj, clientSocket,words);
+	else if (words.size() < 2)
+	{
+		std::string message = ": 461 * KICK :Not enough parameters\r\n";
+		clientObj->sendMessage(clientSocket, message);
+	}
 }
 
 
 void ModeUser::Commande(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
-	// std::cout << words[0] << std::endl;
-	
 	if (words.empty())
-		return; // Check for empty command
+		return;
 
     typedef void (ModeUser::*CommandFunc)(Server*, Client*, int, std::vector<std::string>&);
 
@@ -110,9 +129,6 @@ void ModeUser::Commande(Server* serverObj, Client* clientObj, int clientSocket, 
         CommandFunc Func = it->second;
         (this->*Func)(serverObj, clientObj, clientSocket, words);
     }
-	// else {
-    //     std::cout << "Unknown command: " << words[0] << std::endl;
-    // }
 }
 
 bool ModeUser::Check_Join() {

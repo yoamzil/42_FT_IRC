@@ -80,13 +80,13 @@ std::string Server::getPassword()
 	return (password);
 }
 
+std::string Buffering;
 
 void    Server::handleClient(Server* serverObj, int clientSocket)
 {
 	
 	Client clientObj;
     char    buffer[512];
-	// std::cout << "Received" << std::endl;
 	
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
@@ -104,13 +104,28 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
         removeClient(clientSocket);
         return ;
     }
-    buffer[bytesRead] = '\0';
-    // std::cout << "Received: " << buffer << std::endl;
-	clientObj.handleMessage(serverObj, clientSocket, buffer);
-	// send(clientSocket, str.c_str(), str.size(), 0);
-	// Message(clientSocket, buffer);
-
-    // send(clientSocket, buffer, bytesRead, 0);
+	buffer[bytesRead] = '\0';
+	if (Buffering.length() == 0) {
+    	Buffering = buffer;
+		std::cout << "Message has been buffered" << std::endl;
+	}
+	else {
+		// Buffering += " ";
+		Buffering += buffer;
+		std::cout << "Message has been buffered" << std::endl;
+	}
+	// Buffering += buffer;
+	std::cout << Buffering << std::endl;
+	// if (bytesRead)
+	// 	std::cout << buffer << std::endl;
+	int bufLeng = Buffering.length();
+	std::cout << bufLeng << std::endl;
+	if (Buffering[bufLeng - 1] == '\n' && Buffering[bufLeng - 2] == '\r')
+	{
+		std::cout << "message is complete" << std::endl;
+		clientObj.handleMessage(serverObj, clientSocket, Buffering);
+		Buffering = "";
+	}
 }
 
 void    Server::acceptClient()
@@ -130,12 +145,10 @@ void    Server::acceptClient()
 	setNonBlocking(clientSocket);
 	pollfd clientPollFd = {clientSocket, POLLIN, 0};
 	clientSockets.push_back(clientPollFd);
-	// clients[clientSocket] = "";
 
 	Client* newClient = new Client();
     newClient->setFd(clientSocket);
     mapClient[clientSocket] = newClient;
-	// Channel* newChannel = new Channel();
 
 	std::cout << "New client connected " << clientSocket << std::endl;
 }
@@ -144,7 +157,6 @@ void    Server::start(Server*	serverObj)
 {
 	
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
-	// Client client;
 	
     while (true)
     {
@@ -171,6 +183,7 @@ void    Server::start(Server*	serverObj)
         }
     }
 }
+
 
 void    Server::removeClient(int clientSocket)
 {
