@@ -203,7 +203,7 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                         sign = 2;
                         i++;
                     }
-                    if (sign == 1) ////////////////
+                    if (sign == 1)
                     {
                         if (words[2][i] == 'k')
                         {
@@ -263,8 +263,6 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                                 std::map<int, Client*>::iterator isAlreadyOper = serverObj->channels[words[1]].operators.find(clientFd);
                                 if (isAlreadyOper == serverObj->channels[words[1]].operators.end())
                                 {
-                                    std::cout << "neeeeew operator added\n";
-                                    // std::cout << "alreadyyyyyyy operator" << isAlreadyOper->second->getNickname() << "\n";
                                     serverObj->channels[words[1]].setOperator(clientFd, serverObj->channels[words[1]].clients[clientFd]);
                                     for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
                                     {
@@ -274,8 +272,6 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                                 }
                                 else 
                                 {
-                                    std::cout << "already operator \n";
-                                    // serverObj->channels[words[1]].setOperator(clientFd, serverObj->channels[words[1]].clients[clientFd]);
                                     for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
                                     {
                                         std::string message = ":" + it->second->getNickname() + "!" + it->second->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " MODE " + serverObj->channels[words[1]].getName() + " +o " + words[3] + "\r\n";
@@ -285,7 +281,7 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                             }
                         }
                     }
-                    else if (sign == 2) ////////////////
+                    else if (sign == 2)
                     {
                         if (words[2][i] == 'k')
                         {
