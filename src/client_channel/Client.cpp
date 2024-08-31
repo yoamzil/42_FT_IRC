@@ -132,24 +132,26 @@ void Client::sendMessage(int clientSocket, const std::string& message) {
     send(clientSocket, message.c_str(), message.size(), 0);
 }
 
-void Client::sendList(Server *serverObj , const std::string& channelName)
+void Client::sendList(Server *serverObj , int clientSocket, const std::string& channelName)
 {
 	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
 	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
 	if (it != currentChannels.end()) {
 		Channel& channel = it->second;
 		std::map<int, Client*> channelClients = channel.getClients();
+		std::map<int, Client*> list_operator = channel.getOperators();
+
 		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
 			Client* cliente = clientI->second;
 
 			std::string msg;
 			for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
 				Client* clien = clientIt->second;
-				if (cliente->getFd() != clien->getFd())
+				if (list_operator.begin()->second->getNickname() != clien->getNickname())
 					msg = msg + " " + clien->getNickname();
 
 			}
-			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + list_operator.begin()->second->getNickname() + " " + msg + "\r\n";
 			std::string message2 = ": 366 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
 			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
@@ -158,24 +160,25 @@ void Client::sendList(Server *serverObj , const std::string& channelName)
 	
 }
 
-void Client::LeaveSendList(Server *serverObj , __unused int clientSocket, const std::string& channelName)
+void Client::LeaveSendList(Server *serverObj ,  __unused int clientSocket, const std::string& channelName)
 {
 	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
 	std::map<std::string, Channel>::iterator it = currentChannels.find(channelName);
 	if (it != currentChannels.end()) {
 		Channel& channel = it->second;
 		std::map<int, Client*> channelClients = channel.getClients();
+		std::map<int, Client*> list_operator = channel.getOperators();
 		for (std::map<int, Client*>::iterator clientI = channelClients.begin(); clientI != channelClients.end(); ++clientI) {
 			Client* cliente = clientI->second;
 
 			std::string msg;
 			for (std::map<int, Client*>::iterator clientIt = channelClients.begin(); clientIt != channelClients.end(); ++clientIt) {
 				Client* clien = clientIt->second;
-				if (cliente->getFd() != clien->getFd())
+				if (list_operator.begin()->second->getNickname() != clien->getNickname())
 					msg = msg + " " + clien->getNickname();
 
 			}
-			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + msg + "\r\n";
+			std::string message1 = ": 353 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " = " + channelName + " :@" + list_operator.begin()->second->getNickname()  + " " + msg + "\r\n";
 			std::string message2 = ": 366 " + serverObj->getClient()[cliente->getFd()]->getNickname() + " " + channelName + " :End of /NAMES list.\r\n";
 			send(cliente->getFd(), message1.c_str(), message1.size(), 0);
 			send(cliente->getFd(), message2.c_str(), message2.size(), 0);
@@ -183,7 +186,7 @@ void Client::LeaveSendList(Server *serverObj , __unused int clientSocket, const 
 	}
 }
 
-void Client::leaveChannel(Server *serverObj, int clientSocket, const std::string& channelName) {
+void Client::leaveChannel(Server *serverObj, __unused int clientSocket, const std::string& channelName) {
 	std::map<std::string, Channel> currentChannels = serverObj->getChannels();
 	if (serverObj->getClient().find(clientSocket) != serverObj->getClient().end()) {
 		Client* clientObj = serverObj->getClient()[clientSocket];
@@ -360,7 +363,7 @@ void Client::joinChannel(Server *serverObj, int clientSocket, const std::string&
                 send(it->first, message.c_str(), message.size(), 0);
             }
         }
-       	sendList(serverObj, channelName);
+       	sendList(serverObj, clientSocket, channelName);
    	}
 }
 
@@ -427,7 +430,10 @@ void Client::handleMessage(Server* serverObj, int clientSocket, const std::strin
 		{
 			if (clientObj->getStatus() == 1)
 			{
-				command.Commande(serverObj, clientObj, clientSocket, words);
+				if (words[0][0] != '/')
+					command.Commande(serverObj, clientObj, clientSocket, words);
+				else
+					clientObj->sendMessage(clientSocket, ":server_name 421 " + clientObj->getNickname() + " " + words[0] + " :Unknown command\r\n");
 			}
 			if (!command.check_Comande(words) && clientObj->getStatus() == 1)
 			{

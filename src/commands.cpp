@@ -258,6 +258,7 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                                 std::map<int, Client*>::iterator isAlreadyOper = operators.find(clientFd);
                                 if (isAlreadyOper == operators.end())
                                 {
+									
                                     std::cout << "******** fuck off ********\n";
                                     serverObj->channels[words[1]].setOperator(clientFd, clients[clientFd]);
                                     std::string modeMessage = ":" + it->second->getNickname() + "!" + it->second->getUsername() + " MODE " + serverObj->channels[words[1]].getName() + " +o " + words[3].c_str() + "\r\n";

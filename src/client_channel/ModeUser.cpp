@@ -7,12 +7,24 @@ ModeUser::~ModeUser() {
 }
 
 void ModeUser::Join(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {
+
+	for (std::vector<std::string>::iterator it = clientObj->_channelNames.begin(); it != clientObj->_channelNames.end(); ++it)
+	{
+		if (words[0] == "JOIN" && *it == words[1])
+		{
+			std::string message = ": 442 * " + clientObj->getNickname() + " " + words[1] + " :You're already on that channel\r\n";
+			clientObj->sendMessage(clientSocket, message);
+			return;
+		}
+	}
+
 	if (words[0] == "JOIN" && !words[1].empty() && clientObj->getStatus() == 1)
 	{
 		if (words[1][0] == '#')
 		{
 			clientObj->joinChannel(serverObj, clientSocket, words[1], words);
-		} else if (words[1][0] != '#')
+		} 
+		if (words[1][0] != '#')
 		{
 			std::string message = ": 403 * " + clientObj->getNickname() + " " + words[1] + " :No such channel\r\n";
 			clientObj->sendMessage(clientSocket, message);
@@ -23,6 +35,7 @@ void ModeUser::Join(Server* serverObj, Client* clientObj, int clientSocket, std:
 		std::string message = ": 461 * JOIN :Not enough parameters\r\n";
 		clientObj->sendMessage(clientSocket, message);
 	}
+	
 }
 
 void ModeUser::Part(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words) {

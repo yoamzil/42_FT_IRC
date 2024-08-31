@@ -57,7 +57,7 @@ class Client : public Commands
 		void 		start();
 		void 		setLocation(const std::string& Location);
 		void 		sendMessage(int clientSocket, const std::string& message);
-		void 		sendList(Server *serverObj , const std::string& channelName);
+		void 		sendList(Server *serverObj , int clientSocket, const std::string& channelName);
 		void 		joinChannel(Server *serverObj, int clientSocket, const std::string& channelName, std::vector<std::string> words);
 		void		leaveChannel(Server *serverObj, int clientSocket, const std::string& channel);
 		void		broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket);

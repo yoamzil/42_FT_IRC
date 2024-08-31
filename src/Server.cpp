@@ -86,6 +86,7 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
 	
 	Client clientObj;
     char    buffer[512];
+	// std::cout << "Received" << std::endl;
 	
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
@@ -104,7 +105,7 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
         return ;
     }
     buffer[bytesRead] = '\0';
-
+    // std::cout << "Received: " << buffer << std::endl;
 	clientObj.handleMessage(serverObj, clientSocket, buffer);
 	// send(clientSocket, str.c_str(), str.size(), 0);
 	// Message(clientSocket, buffer);
@@ -168,7 +169,6 @@ void    Server::start(Server*	serverObj)
                 }
             }
         }
-		// system("leaks ircserv");mak
     }
 }
 
