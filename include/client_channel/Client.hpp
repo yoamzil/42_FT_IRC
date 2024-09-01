@@ -20,17 +20,12 @@ class Client : public Commands
 		std::string username;
 		std::string nickname;
 		std::string pass;
-		// std::string _channelName;
 		std::vector<std::string>  _channelNames;
 		bool		correctPassword;
 		bool		status;
 
-		// std::map<std::string, Channel> channels;
     public:
 		Client();
-		// std::map<std::string, Channel> getChannels();
-		// Client(Client const &src);
-		// Client & operator=(Client const &src);
 
 		void setUsername(std::string userName);
 		void setNikename(std::string nikeName);
@@ -39,8 +34,6 @@ class Client : public Commands
 		bool		getStatus();
 		void		setStatus(int status);
 		bool 	check_password(std::string str);
-		// void	setPassword(std::string Pass);
-		// std::string	getPassword();
 		int 	getFd();
 		bool 	correctpass();
 		bool 	getAuthentication();
@@ -61,7 +54,6 @@ class Client : public Commands
 		void 		joinChannel(Server *serverObj, int clientSocket, const std::string& channelName, std::vector<std::string> words);
 		void		leaveChannel(Server *serverObj, int clientSocket, const std::string& channel);
 		void		broadcastMessage(Server *serverObj, const std::string& channelName, const std::string& message, int clientSocket);
-		// void		authentication(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string> & words);
 		void 		handleMessage(Server* serverObj, int clientSocket, const std::string& message);
 		void 		LeaveSendList(Server *serverObj , __unused int clientSocket, const std::string& channelName);
 

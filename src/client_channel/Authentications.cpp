@@ -26,8 +26,6 @@ void Authentications::Pass(Server* serverObj, Client* clientObj, int clientSocke
 		if (words[1] == serverObj->getPassword())
 		{
 			clientObj->setCorrectPass();
-			// client.setPassword(password);
-
 		}
 		else if (words[1] != serverObj->getPassword())
 		{
@@ -58,7 +56,6 @@ void Authentications::Nick(Server* serverObj, Client* clientObj, int clientSocke
 		}
 		else if (clientObj->getNickname() != words[1] && clientObj->getNickname().empty()){
 			clientObj->setNikename(words[1]);
-			// clientObj->setStatus(0);
 			std::cout <<  "Create a Nick : " << words[1] << " , Id : " << clientSocket << " correct ID : " << clientObj->correctpass()  << std::endl;
 			return ;
 		}
@@ -102,7 +99,7 @@ void Authentications::User(Client* clientObj, int clientSocket, std::vector<std:
 
 void Authentications::Login(Server* serverObj, Client* clientObj, int clientSocket, std::vector<std::string>& words) {
     if (words.empty())
-		return; // Check for empty command
+		return;
 
     typedef void (Authentications::*CommandFunc)(Client*, int, std::vector<std::string>&);
     typedef void (Authentications::*CommandPass)(Server*, Client*, int, std::vector<std::string>&);
