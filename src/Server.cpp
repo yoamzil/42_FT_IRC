@@ -105,24 +105,13 @@ void    Server::handleClient(Server* serverObj, int clientSocket)
         return ;
     }
 	buffer[bytesRead] = '\0';
-	if (Buffering.length() == 0) {
+	if (Buffering.length() == 0)
     	Buffering = buffer;
-		std::cout << "Message has been buffered" << std::endl;
-	}
-	else {
-		// Buffering += " ";
+	else 
 		Buffering += buffer;
-		std::cout << "Message has been buffered" << std::endl;
-	}
-	// Buffering += buffer;
-	std::cout << Buffering << std::endl;
-	// if (bytesRead)
-	// 	std::cout << buffer << std::endl;
 	int bufLeng = Buffering.length();
-	std::cout << bufLeng << std::endl;
 	if (Buffering[bufLeng - 1] == '\n' && Buffering[bufLeng - 2] == '\r')
 	{
-		std::cout << "message is complete" << std::endl;
 		clientObj.handleMessage(serverObj, clientSocket, Buffering);
 		Buffering = "";
 	}

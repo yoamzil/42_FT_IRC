@@ -135,13 +135,19 @@ void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> wo
             std::string topic = channelIt->second.getTopic();
             if (topic.empty())
             {
-                std::string message = ": 331 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :No topic is set.\r\n";
-     	        send(isAdmin, message.c_str(), message.size(), 0);
+				for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+				{
+					std::string message = ": 331 " + it->second->getNickname() + " " + words[1] + " :No topic is set.\r\n";
+					send(it->first, message.c_str(), message.size(), 0);
+				}
             }
             else
             {
-                std::string message = ": 332 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :" + topic + "\r\n";
-    	        send(isAdmin, message.c_str(), message.size(), 0);
+				for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+				{
+					std::string message = ": 332 " + it->second->getNickname() + " " + words[1] + " :" + topic + "\r\n";
+					send(it->first, message.c_str(), message.size(), 0);
+				}
             }
         }
         else if (channelIt->second.find_mode("t"))
@@ -151,21 +157,30 @@ void Commands::topic(Server* serverObj, int isAdmin, std::vector<std::string> wo
             {
                 std::string newTopic = words[2].substr(1); 
                 channelIt->second.setTopic(newTopic);
-                std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
-       	        send(isAdmin, message.c_str(), message.size(), 0);
+				for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+				{
+					std::string message = ":" + it->second->getNickname() + "!" + it->second->getUsername() + "@" + it->second->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+					send(it->first, message.c_str(), message.size(), 0);
+				}
             }
             else
             {
-                std::string message = ": 482 " + serverObj->mapClient[isAdmin]->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
-                send(isAdmin, message.c_str(), message.size(), 0);
+				for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+				{
+					std::string message = ": 482 " + it->second->getNickname() + " " + words[1] + " :You're not channel operator \r\n";
+					send(it->first, message.c_str(), message.size(), 0);
+				}
             }
         }
         else 
         {
             std::string newTopic = words[2].substr(1); 
             channelIt->second.setTopic(newTopic);
-            std::string message = ":" + serverObj->mapClient[isAdmin]->getNickname() + "!" + serverObj->mapClient[isAdmin]->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
-   	        send(isAdmin, message.c_str(), message.size(), 0);
+			for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+			{
+				std::string message = ":" + it->second->getNickname() + "!" + it->second->getUsername() + "@" + it->second->getLocation() + " TOPIC " + words[1] + " :" + newTopic + "\r\n";
+				send(it->first, message.c_str(), message.size(), 0);
+			}
         }
     }
 }
@@ -357,6 +372,22 @@ void Commands::mode(Server* serverObj, int isAdmin, std::vector<std::string> wor
                                 send(it->first, message.c_str(), message.size(), 0);
                             }
                             serverObj->channels[words[1]].operators.erase(clientFd);
+                        }
+						else if (words[2][i] == 't')
+                        {
+							for (std::vector<std::string>::iterator iter = serverObj->channels[words[1]].modes.begin(); iter != serverObj->channels[words[1]].modes.end(); ++iter)
+                            {
+                                if (*iter == "t")
+                                {
+                                    serverObj->channels[words[1]].deleteMode("t");
+                                    break;
+                                }
+                            } 
+                            for (std::map<int, Client*>::iterator it = serverObj->channels[words[1]].clients.begin(); it != serverObj->channels[words[1]].clients.end(); ++it) 
+                            {
+                                std::string message = ":" + it->second->getNickname() + "!" + it->second->getUsername() + "@" + serverObj->mapClient[isAdmin]->getLocation() + " MODE " + serverObj->channels[words[1]].getName() + " -t\r\n";
+                                send(it->first, message.c_str(), message.size(), 0);
+                            }
                         }
                     }
                 }
