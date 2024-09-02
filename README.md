@@ -1,14 +1,3 @@
-
-## :dizzy: Summary
-
-1. [About the project](https://github.com/marineks/Ft_irc#school_satchel-about-this-project)
-* [Definition](https://github.com/marineks/Ft_irc#_-crystal_ball-definition)
-* [Subject requirements](https://github.com/marineks/Ft_irc#_-floppy_disk-subject-requirements)
-* [Commands that we implemented](https://github.com/marineks/Ft_irc#high_brightness-commands-that-we-implemented-)
-2. [Some tips, graphs and other ressources](https://github.com/marineks/Ft_irc#gift-some-tips-graphs-and-other-ressources)
-* [Helpful links](https://github.com/marineks/Ft_irc#_-books-helpful-links)
-* [Tips](https://github.com/marineks/Ft_irc#_-books-helpful-links)
-___
 ## :school_satchel: About this project
 
 
@@ -18,8 +7,6 @@ The objective of this project is to reproduce the functioning of an IRC server.
 
 
 > "IRC (Internet Relay Chat) is a **protocol for real-time text messaging between internet-connected computers created in 1988**. It is mainly used for group discussion in chat rooms called “channels” although it supports private messages between two users, data transfer, and various server-side and client-side commands. As of April 2011, the top 100 IRC networks served over 500,000 users at a time on hundreds of thousands of channels." ([source](https://www.radware.com/security/ddos-knowledge-center/ddospedia/irc-internet-relay-chat/))
-
-<img src="assets/irc-shema.png">
 
 ### _ :floppy_disk: Subject requirements
 
@@ -77,8 +64,6 @@ ___
 
 - **Regarding the client/server connection** : [Beej's Guide to network programming](https://beej.us/guide/bgnet/pdf/bgnet_a4_c_1.pdf). This is super super helpful to better understand what is a socket, what the `poll()` function entails, which system calls we should use or in which order, and so on.
 
-
-<p align="center"> <img src="assets/network.png"> </p>
 
 - **A link to the IRC Client Protocol with a good formatting** : [Modern IRC Client Protocol](https://modern.ircdocs.horse/). You will find there a description of all the commands with correct syntax, expected Numerical Replies,...
 
