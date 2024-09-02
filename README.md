@@ -1,11 +1,3 @@
-# :zap: FT_IRC :zap:
-
-<p align="center">  <img src="assets/welcome.png" width="55%"> </p>
-
-
-##### *Proudly coded by [@tmanolis](https://github.com/tmanolis), [@QnYosa](https://github.com/QnYosa) and @marineks :heart:*
-
-___
 
 ## :dizzy: Summary
 
