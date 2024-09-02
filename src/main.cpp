@@ -7,12 +7,19 @@ int main(int argc, char* argv[])
         std::cerr << "Usage: " << argv[0] << " <port> <password>" << std::endl;
         return (1);
     }
-
     int             port        = std::atoi(argv[1]);
     std::string     password    = argv[2];
 
+	if (port == 0)
+	{
+		std::cout << "Invalid port" << std::endl;
+		return (1);
+	}
+
     Server      ircServer(port, password);
-    ircServer.start();
+	Server*		serverObj = &ircServer;
+    ircServer.start(serverObj);
+
 
     return (0);
 }

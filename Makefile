@@ -3,10 +3,19 @@ CXXFLAGS	=	-Wall -Werror -Wextra -std=c++98
 NAME		=	ircserv
 SRCS		=	src/main.cpp \
 				src/Server.cpp \
-				src/Client.cpp \
+				src/client_channel/Client.cpp \
+				src/client_channel/Channel.cpp \
+				src/Commands.cpp \
+				src/client_channel/Authentications.cpp \
+				src/client_channel/ModeUser.cpp \
 
 HFS			=	include/Server.hpp \
-				include/Client.hpp
+				include/client_channel/Client.hpp \
+				include/client_channel/Channel.hpp \
+				include/Commands.hpp \
+				include/client_channel/Authentications.hpp \
+				include/client_channel/ModeUser.hpp \
+				
 
 OBJS		=	$(SRCS:.cpp=.o)
 

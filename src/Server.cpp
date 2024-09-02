@@ -1,5 +1,21 @@
 #include "../include/Server.hpp"
 
+Server::Server(Server const &src)
+{
+	*this = src;
+}
+
+Server & Server::operator=(Server const &src)
+{
+	if (this != & src)
+	{
+		*this = src;
+	}
+    return (*this);
+}
+
+
+
 void    Server::setNonBlocking(int socket)
 {
     int flags = fcntl(socket, F_GETFL, 0);
@@ -31,7 +47,10 @@ Server::Server(int port, const std::string& password) : port(port), password(pas
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(port);
-
+	if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &serverAddr, sizeof(serverAddr)) < 0) {
+        perror("Setsockopt failed");
+        exit(EXIT_FAILURE);
+    }
     if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1)
     {
         std::cerr << "Failed to bind server socket" << std::endl;
@@ -51,9 +70,24 @@ Server::Server(int port, const std::string& password) : port(port), password(pas
     clientSockets.push_back(serverPollFd);
 }
 
-void    Server::handleClient(int clientSocket)
+Server::~Server()
 {
+	close(serverSocket);
+}
+
+std::string Server::getPassword()
+{
+	return (password);
+}
+
+std::string Buffering;
+
+void    Server::handleClient(Server* serverObj, int clientSocket)
+{
+	
+	Client clientObj;
     char    buffer[512];
+	
     int     bytesRead = recv(clientSocket, buffer, 512, 0);
 
     if (bytesRead <= 0)
@@ -62,12 +96,25 @@ void    Server::handleClient(int clientSocket)
         {
             std::cerr << "Failed to read from client" << std::endl;
         }
+		std::vector<std::string> channelNames = mapClient[clientSocket]->getChannelName();
+		for (std::vector<std::string>::iterator it = channelNames.begin(); it != channelNames.end(); ++it)
+		{
+			mapClient[clientSocket]->leaveChannel(serverObj, clientSocket, *it);
+		}
         removeClient(clientSocket);
         return ;
     }
-    buffer[bytesRead] = '\0';
-    std::cout << "Received: " << buffer << std::endl;
-    // send(clientSocket, buffer, bytesRead, 0);
+	buffer[bytesRead] = '\0';
+	if (Buffering.length() == 0)
+    	Buffering = buffer;
+	else 
+		Buffering += buffer;
+	int bufLeng = Buffering.length();
+	if (Buffering[bufLeng - 1] == '\n' && Buffering[bufLeng - 2] == '\r')
+	{
+		clientObj.handleMessage(serverObj, clientSocket, Buffering);
+		Buffering = "";
+	}
 }
 
 void    Server::acceptClient()
@@ -84,16 +131,22 @@ void    Server::acceptClient()
         }
         return ;
     }
-    setNonBlocking(clientSocket);
-    pollfd clientPollFd = {clientSocket, POLLIN, 0};
-    clientSockets.push_back(clientPollFd);
-    clients[clientSocket] = "";
-    std::cout << "New client connected " << clientSocket << std::endl;
+	setNonBlocking(clientSocket);
+	pollfd clientPollFd = {clientSocket, POLLIN, 0};
+	clientSockets.push_back(clientPollFd);
+
+	Client* newClient = new Client();
+    newClient->setFd(clientSocket);
+    mapClient[clientSocket] = newClient;
+
+	std::cout << "New client connected " << clientSocket << std::endl;
 }
 
-void    Server::start()
+void    Server::start(Server*	serverObj)
 {
+	
     std::cout << "Server started on port " << port << " with password " << password << std::endl;
+	
     while (true)
     {
         int pollCount = poll(clientSockets.data(), clientSockets.size(), -1);
@@ -111,19 +164,21 @@ void    Server::start()
                 {
                     acceptClient();
                 }
-                else
+                if (clientSockets[i].fd != serverSocket)
                 {
-                    handleClient(clientSockets[i].fd);
+                    handleClient(serverObj, clientSockets[i].fd);
                 }
             }
         }
     }
 }
 
+
 void    Server::removeClient(int clientSocket)
 {
     close(clientSocket);
-    clients.erase(clientSocket);
+	delete mapClient[clientSocket];
+    mapClient.erase(clientSocket);
     for (size_t i = 0; i < clientSockets.size(); i++)
     {
         if (clientSockets[i].fd == clientSocket)
@@ -133,4 +188,19 @@ void    Server::removeClient(int clientSocket)
         }
     }
     std::cout << "Client disconnected " << clientSocket << std::endl;
+}
+
+
+std::map <int , Client *> Server::getClient()
+{
+	return (this->mapClient);
+}
+
+std::map<std::string, Channel> Server::getChannels()
+{
+	return (channels);
+}
+
+void Server::setChannels(const std::map<std::string, Channel>& newChannels) {
+    channels = newChannels;
 }
