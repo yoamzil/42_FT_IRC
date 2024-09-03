@@ -1,7 +1,18 @@
-## :school_satchel: About this project
+<h1 align="center" id="title">IRC Server Project</h1>
+<p align="center"><img src="https://miro.medium.com/v2/resize:fit:2000/1*nQRvYcNqp7inbwt3m7xxlQ.jpeg" alt="project-image"></p>
+<p id="description">This project involves creating an IRC (Internet Relay Chat) server in C++ 98. The server will handle multiple clients, support various IRC commands, and facilitate communication between clients via channels.</p>
+
+<h2>🧐 Requirements</h2>
+
+- Develop an IRC server in C++ 98.
+- The server must handle multiple clients simultaneously without hanging.
+- All I/O operations must be non-blocking.
+- Use `poll()` or equivalent for handling all operations.
+- Implement specific IRC commands: AUTHENTICATE, NICK, USER, JOIN, PRIVMSG, KICK, INVITE, TOPIC, MODE.
+- Ensure robust error handling and testing.
+- Use a reference IRC client for testing.
 
 
-The objective of this project is to reproduce the functioning of an IRC server.
 
 ###  _ :crystal_ball: Definition
 
@@ -38,16 +49,9 @@ ___
 | Join | The `JOIN` command indicates that the client wants to join the given channel(s), each channel using the given key for it. |
 | Kick | The `KICK` command can be used to request the forced removal of a user from a channel. |
 | Kill | The `KILL` command is used to close the connection between a given client and the server they are connected to. `KILL` is a privileged command and is available only to IRC Operators. |
-| List | The `LIST` command is used to get a list of channels along with some information about each channel. |
 | Mode | The `MODE` command is used to set or remove options (or modes) from a given target. Our user modes : i, o. Our channels modes: b,k,m,o,p,s,t,v |
-| Motd | The `MOTD` command is used to get the “Message of the Day” of the given server. |
-| Names | The `NAMES` command is used to view the nicknames joined to a channel and their channel membership prefixes. |
 | Nick | The `NICK` command is used to give the client a nickname or change the previous one. |
-| Notice | The `NOTICE` command is used to send notices between users, as well as to send notices to channels. The difference between `NOTICE` and `PRIVMSG` is that automatic replies must never be sent in response to a `NOTICE` message.  |
-| Oper | The `OPER` command is used by a normal user to obtain IRC operator privileges.  |
-| Part | The `PART` command removes the client from the given channel(s). |
 | Pass | The `PASS` command is used to set a ‘connection password’. If set, the password must be set before any attempt to register the connection is made. |
-| Ping | The `PING` command is sent by either clients or servers to check the other side of the connection is still connected and/or to check for connection latency, at the application layer. |
 | Privmsg | The `PRIVMSG` command is used to send private messages between users, as well as to send messages to channels. |
 | Quit | The `QUIT` command is used to terminate a client’s connection to the server. The server acknowledges this by replying with an `ERROR` message and closing the connection to the client. |
 | Topic | The `TOPIC` command is used to change or view the topic of the given channel. |
@@ -68,46 +72,8 @@ ___
 - **A link to the IRC Client Protocol with a good formatting** : [Modern IRC Client Protocol](https://modern.ircdocs.horse/). You will find there a description of all the commands with correct syntax, expected Numerical Replies,...
 
 
-### _ :mailbox: Tips
 
+<h2>👥 Contributors</h2>
 
-- **A suggestion of project roadmap :** 
-  1- Begin by establishing a working client/server socket connection, 
-  2- Then build on that : add the signals handling (`CTRL+C`, `CTRL+D`, `CTRL+Z`);
-   3- ***Only*** then begin the client registration system (`NICK`, `USER`, `PASS`), 
-   4- The server commands (`PING`, `OPER`, `KILL`...) and 
-   5- The channel operations commands (`JOIN`, `PART`, `INVITE`, `KICK`, `PRIVMSG`, `NOTICE`...).
-
-
-	___
-
-- **Help, my code works perfectly with irssi but not with nc!** If you have this kind of issue, this is because, like us, you made the mistake of coding with irssi first and not nc :grimacing: Keep in mind that nc is very "minimalist" compared to irssi. That means that irssi will send you everything at once : the command, and the CRLF ending (`\r\n`). It will also append the `:` in some cases (for instance `TOPIC #channel :message`).
-
-
-  *This is not the case with nc* : you will have to concatenate the messages sent by the Client until you find the proper "end" (the CRLF). **That means that you should have a (read) buffer ==for each client== connected to your server**. Bonus: this will take care of he `CTRL+D` signal too! :smirk:
-
-
-  So now, if you follow us, you should guess that, for each client, **you will need a (send) buffer as well**! This will be very efficient in taking care of the `CTRL+Z` signal :innocent: . Don't forget to also check the `POLLIN and POLLOUT revents` in your server loop...
-
-	___
-
-- **How to know how to correctly format a RPL to be understood by your IRC client of reference** (for instance, irssi) ?
-  .
-  
-  Join an existing server (try `/connect DALNET`), then enter the command `/RAWLOG OPEN debug.log` [(more doc)](https://irssi.org/documentation/help/rawlog/), and try the commands you're having some troubles with. This will open a log file in your workspace containing the all the exact client/server interactions for these commands, such as :
-	```c
-	// [...]
-	<< JOIN #help // from the client
-	>> :nickname!username@host JOIN :#help // reply from the server
-	// [...]
-	```
-  Voilà ! Now you know you forgot the `:` before the channel name! ;)
-
-	___
-- **Okay, now you have a good format but the code is not clean at all?** Try to use dynamic macros in this way (*we guarantee this is a life changer/saver!*) :
-  ```cpp
-	#define user_id(nickname, username) (":" + nickname + "!" + username + "@localhost")
-	#define RPL_INVITE(user_id, invited, channel) (user_id + " INVITE " + invited + " #" + channel + "\r\n")
-	// [...]
-	#define ERR_INVALIDMODEPARAM(client, channel, mode, password) ("696 " + client + " #" + channel + " " + mode + " " + password + " : password must only contained alphabetic character\r\n")
-  ```
+- [Houmam Ait Salimane](https://profile.intra.42.fr/users/hait-sal)
+- [Hamza Aarab](https://profile.intra.42.fr/users/haarab)
